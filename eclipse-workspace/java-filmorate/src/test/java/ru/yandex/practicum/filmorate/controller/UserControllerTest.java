@@ -1,0 +1,31 @@
+package ru.yandex.practicum.filmorate.controller;
+
+import java.time.LocalDate;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.service.UserService;
+
+@WebMvcTest(value = UserController.class)
+
+class UserControllerTest {
+
+	@MockBean
+	private UserController userController;
+
+	@MockBean
+	private UserService service;
+
+	@Test
+	void shouldReturn200whenGetUsers() throws Exception {
+		User user = new User(0, "correct.email@mail.ru", "correctlogin", "Correct Name", LocalDate.of(2002, 1, 1));
+
+	}
+
+	@Test
+	void shouldReturn200whenPostCorrectUserData() throws Exception {
+		User user = new User(0, "correct.email@mail.ru", "correctlogin", "Correct Name", LocalDate.of(2002, 1, 1));
+
+	}
+}
