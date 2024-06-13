@@ -41,9 +41,11 @@ public class UserController {
 	@PutMapping
 	public User updateFilm(@RequestBody User user) {
 		if (!userService.getAllUsers().containsKey(user.getId())) {
+			log.error("User not found in the database");
 			throw new RuntimeException("Пользователя нет в базе");
 		}
 		userService.setUserNameByLogin(user, "Обновлен");
+		log.info("User updated: {}", user);
 		return userService.updateUser(user);
 	}
 }

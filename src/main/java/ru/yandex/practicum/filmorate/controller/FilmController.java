@@ -40,9 +40,11 @@ public class FilmController {
 	@PutMapping
 	public Film updateFilm(@RequestBody Film film) {
 		if (!filmService.getAllFilms().containsKey(film.getId())) {
+			log.error("Film not found in the database");
 			throw new RuntimeException("Фильм нет в базе");
 		}
 		filmService.validateReleaseDate(film, "Обновлен");
+		log.info("Film updated: {}", film);
 		return filmService.updateFilm(film);
 	}
 

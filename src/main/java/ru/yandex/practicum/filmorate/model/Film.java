@@ -18,8 +18,6 @@ import ru.yandex.practicum.filmorate.annotations.CorrectReleaseDay;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 public class Film {
 
 	@PositiveOrZero(message = "id не может быть отрицательным")
