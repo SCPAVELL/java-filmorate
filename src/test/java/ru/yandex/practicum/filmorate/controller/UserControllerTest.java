@@ -16,13 +16,20 @@ class UserControllerTest {
 
 	@Test
 	void shouldReturn200whenGetUsers() throws Exception {
-		User user = new User(0, "correct.email@mail.ru", "correctlogin", "Correct Name", LocalDate.of(2002, 1, 1));
+		User user = new User();
+		user.setEmail("correct.email@mail.ru");
+		user.setLogin("correctlogin");
+		user.setName("Correct Name");
 
 	}
 
 	@Test
 	void shouldReturn200whenPostCorrectUserData() throws Exception {
-		User user = new User(0, "correct.email@mail.ru", "correctlogin", "Correct Name", LocalDate.of(2002, 1, 1));
+		User user = new User();
+		user.setEmail("correct.email@mail.ru");
+		user.setLogin("Correct description");
+		user.setName("Correct Name");
+		user.setBirthday(LocalDate.of(2002, 1, 1));
 
 	}
 }

@@ -1,36 +1,20 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.stereotype.Component;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import java.util.List;
 import ru.yandex.practicum.filmorate.model.Film;
 
-@Component
-@Getter
-@EqualsAndHashCode
-@ToString
-public class FilmStorage {
-	private final Map<Integer, Film> films = new HashMap<>();
-	private static int id;
+public interface FilmStorage {
+	Film create(Film film);
 
-	public int generateId() {
-		return ++id;
-	}
+	Film update(Film film);
 
-	public Film create(Film film) {
-		int newTaskId = generateId();
-		film.setId(newTaskId);
-		films.put(newTaskId, film);
-		return film;
-	}
+	List<Film> getAllFilms();
 
-	public Film update(Film film) {
-		films.put(film.getId(), film);
-		return film;
-	}
+	Film getFilmById(Integer filmId);
+
+	List<Film> getFilmsPopular(Integer count);
+
+	void addLike(Integer filmId, Integer userId);
+
+	void deleteLike(Integer filmId, Integer userId);
 }

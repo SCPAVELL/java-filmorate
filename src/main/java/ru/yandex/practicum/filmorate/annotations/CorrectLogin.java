@@ -15,7 +15,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Constraint(validatedBy = LoginValidator.class)
 public @interface CorrectLogin {
-	String message() default "must not have space";
+	String message() default "не должно быть свободного места";
 
 	Class<?>[] groups() default {};
 
