@@ -1,54 +1,58 @@
 package ru.yandex.practicum.filmorate.model;
 
-import java.time.LocalDate;
-import java.util.Objects;
-import org.hibernate.validator.constraints.Length;
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import ru.yandex.practicum.filmorate.annotations.CorrectReleaseDay;
 
-/**
- * Film.
- */
+import org.hibernate.validator.constraints.Length;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+import ru.yandex.practicum.filmorate.annotations.CorrectReleaseDay;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 public class Film {
-
-	@PositiveOrZero(message = "id не может быть отрицательным")
+	@PositiveOrZero(message = "id can not be negative")
 	private int id;
-	@NotBlank(message = "Имя должно содержать буквенные символы. ")
+
+	@NotBlank(message = "name must not be empty")
 	private String name;
-	@Length(min = 1, max = 200, message = "Описание фильма не должно превышать 200 символов. ")
+
+	@Length(min = 1, max = 200, message = "description length must be between 1 and 200")
 	private String description;
-	@CorrectReleaseDay(message = "Дата релиза не раньше 28 декабря 1895 года. ")
+
+	@CorrectReleaseDay(message = "releaseDate must be after 28-DEC-1895")
 	private LocalDate releaseDate;
-	@Positive(message = "Продолжительность фильма должна быть положительным числом. ")
-	private long duration;
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(description, duration, id, name, releaseDate);
+	@PositiveOrZero(message = "duration can not be negative")
+	private Integer duration;
+
+	private Set<Integer> likes;
+
+	public Film(String name, String description, LocalDate releaseDate, Integer duration, Set<Integer> likes) {
+		this.name = name;
+		this.description = description;
+		this.releaseDate = releaseDate;
+		this.duration = duration;
+		this.likes = Objects.requireNonNullElseGet(likes, HashSet::new);
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Film other = (Film) obj;
-		return Objects.equals(description, other.description) && duration == other.duration && id == other.id
-				&& Objects.equals(name, other.name) && Objects.equals(releaseDate, other.releaseDate);
+	public void addLike(Integer id) {
+		if (likes == null) {
+			likes = new HashSet<>();
+		}
+		likes.add(id);
 	}
 
+	public void deleteLike(Integer id) {
+		likes.remove(id);
+	}
 }

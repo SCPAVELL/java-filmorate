@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.yandex.practicum.filmorate.model.Film;
+import java.time.LocalDate;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -20,7 +20,7 @@ class FilmControllerTest {
 		film.setName("Correct Name");
 		film.setDescription("Correct description");
 		film.setReleaseDate(LocalDate.of(1995, 5, 26));
-		film.setDuration(100L);
+
 	}
 
 	@Test
@@ -29,6 +29,6 @@ class FilmControllerTest {
 		film.setName("Correct Name");
 		film.setDescription("Correct description");
 		film.setReleaseDate(LocalDate.of(1995, 5, 26));
-		film.setDuration(100L);
+
 	}
 }

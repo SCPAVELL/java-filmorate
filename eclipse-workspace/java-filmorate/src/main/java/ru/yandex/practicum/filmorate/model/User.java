@@ -1,44 +1,49 @@
 package ru.yandex.practicum.filmorate.model;
 
-import java.time.LocalDate;
-import java.util.Objects;
-
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.annotations.CorrectLogin;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.PositiveOrZero;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Valid
 public class User {
-
+	@PositiveOrZero(message = "id can not be negative")
 	private int id;
-	@Email(message = "Электронная почта не может быть пустой и должна содержать символ @.")
+
+	@NotNull(message = "login must not be null")
+	@Email(message = "invalid email")
 	private String email;
-	@NotBlank
-	@Pattern(regexp = "^\\S*$", message = "Логин не может содержать пробелы.")
+
+	@NotBlank(message = "login must not be empty")
+	@CorrectLogin
 	private String login;
+
 	private String name;
-	@PastOrPresent(message = "Дата рождения не может быть в будущем.")
+
+	@PastOrPresent
 	private LocalDate birthday;
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		User other = (User) obj;
-		return Objects.equals(birthday, other.birthday) && Objects.equals(email, other.email) && id == other.id
-				&& Objects.equals(login, other.login) && Objects.equals(name, other.name);
+	private Set<Integer> friends;
+
+	public void addFriend(Integer id) {
+		if (friends == null) {
+			friends = new HashSet<>();
+		}
+		friends.add(id);
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(birthday, email, id, login, name);
+	public Set<Integer> getFriendsId() {
+		if (friends == null) {
+			friends = new HashSet<>();
+		}
+		return friends;
 	}
-
 }
