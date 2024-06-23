@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.service.UserService;
 
 @RestController
 @RequestMapping("/users")
 @AllArgsConstructor
+@Slf4j
 public class UserController {
 
 	private final UserService userService;

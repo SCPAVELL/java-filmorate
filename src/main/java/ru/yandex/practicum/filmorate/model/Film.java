@@ -4,12 +4,9 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
 import org.hibernate.validator.constraints.Length;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.annotations.CorrectReleaseDay;
 
 /**
@@ -17,8 +14,6 @@ import ru.yandex.practicum.filmorate.annotations.CorrectReleaseDay;
  */
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class Film {
 
 	@PositiveOrZero(message = "id не может быть отрицательным")
@@ -34,22 +29,12 @@ public class Film {
 
 	private Set<Integer> likes;
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(description, duration, id, name, releaseDate);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Film other = (Film) obj;
-		return Objects.equals(description, other.description) && duration == other.duration && id == other.id
-				&& Objects.equals(name, other.name) && Objects.equals(releaseDate, other.releaseDate);
+	public Film(String name, String description, LocalDate releaseDate, Integer duration, Set<Integer> likes) {
+		this.name = name;
+		this.description = description;
+		this.releaseDate = releaseDate;
+		this.duration = duration;
+		this.likes = Objects.requireNonNullElseGet(likes, HashSet::new);
 	}
 
 	public void addLike(Integer id) {
