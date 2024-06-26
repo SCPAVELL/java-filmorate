@@ -44,25 +44,30 @@ public class FilmService {
 	}
 
 	public void addLike(Integer filmId, Integer userId) {
-		userStorage.getUserById(userId);
-		filmStorage.addLike(filmId, userId);
-		log.info("like for film with id={} added", filmId);
+		try {
+			userStorage.getUserById(userId);
+			filmStorage.addLike(filmId, userId);
+			log.info("like for film with id={} added", filmId);
+		} catch (Exception e) {
+			log.error("An error occurred while adding like for film with id={}", filmId, e);
+			throw new RuntimeException("Failed to add like for film with id=" + filmId, e);
+		}
 	}
 
 	// Проверка на существование фильма по id
 	public void deleteLike(Integer filmId, Integer userId) {
 		Film film = filmStorage.getFilmById(filmId);
 		if (film == null) {
-			log.error("Фильм с id={} не найден", filmId);
-			throw new FilmNotFoundException("Фильм с id=" + filmId + " не найден");
+			log.error("film for id={} failed", filmId);
+			throw new FilmNotFoundException("Film for id=" + filmId + " failed");
 		}
 		try {
 			userStorage.getUserById(userId);
 			filmStorage.deleteLike(filmId, userId);
 			log.info("like for film with id={} deleted", filmId);
 		} catch (FilmNotFoundException e) {
-			log.error("Фильм с id={} не найден", filmId, e);
-			throw new FilmNotFoundException("Фильм с id=" + filmId + " не найден");
+			log.error("Film for id={} failed", filmId, e);
+			throw new FilmNotFoundException("Film for id=" + filmId + " failed");
 		}
 	}
 
