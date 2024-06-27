@@ -34,12 +34,12 @@ public class FilmService {
 	}
 
 	public Film createFilm(Film film) {
-		validateReleaseDate(film, "Добавлен");
+		validateReleaseDate(film, "Added");
 		return filmStorage.create(film);
 	}
 
 	public Film updateFilm(Film film) {
-		validateReleaseDate(film, "Обновлен");
+		validateReleaseDate(film, "Updated");
 		return filmStorage.update(film);
 	}
 
@@ -78,8 +78,8 @@ public class FilmService {
 
 	public void validateReleaseDate(Film film, String text) {
 		if (film.getReleaseDate().isBefore(START_DATA)) {
-			throw new ValidationException("Дата релиза не может быть раньше " + START_DATA);
+			throw new ValidationException("The release date cannot be earlier " + START_DATA);
 		}
-		log.debug("{} фильм: {}", text, film.getName());
+		log.debug("{} Film: {}", text, film.getName());
 	}
 }

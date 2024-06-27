@@ -36,7 +36,7 @@ public class UserService {
 	 * Создание нового пользователя
 	 */
 	public User createUser(User user) {
-		setUserNameByLogin(user, "Добавлен");
+		setUserNameByLogin(user, "Added");
 		return userStorage.create(user);
 	}
 
@@ -44,7 +44,7 @@ public class UserService {
 	 * Редактирование пользователя
 	 */
 	public User updateUser(User user) {
-		setUserNameByLogin(user, "Обновлен");
+		setUserNameByLogin(user, "Updated");
 		return userStorage.update(user);
 	}
 
@@ -52,11 +52,17 @@ public class UserService {
 	 * Добавление в список друзей
 	 */
 	public void addFriend(Integer userId, Integer friendId) {
-		User user = getUserById(userId);
-		User friend = getUserById(friendId);
-		user.addFriend(friendId);
-		friend.addFriend(userId);
-		log.debug("Пользователь с id {} добавил в список друзей пользователя с id {}", userId, friendId);
+		try {
+			User user = getUserById(userId);
+			User friend = getUserById(friendId);
+			user.addFriend(friendId);
+			friend.addFriend(userId);
+			log.debug("User with id {} added a user to the friends list with id {}", userId, friendId);
+		} catch (UserNotFoundException e) {
+			log.error("User с id={} not found", userId);
+			throw new UserNotFoundException("User с id=" + userId + " not found");
+		}
+
 	}
 
 	/**
@@ -67,7 +73,7 @@ public class UserService {
 		User friend = getUserById(friendId);
 		user.getFriends().remove(friendId);
 		friend.getFriends().remove(userId);
-		log.debug("Пользователь с id {} удален из списка друзей пользователем с id {}", userId, friendId);
+		log.debug("User with id {} deleted from the friends list by a user with id {}", userId, friendId);
 	}
 
 	/**
@@ -87,7 +93,7 @@ public class UserService {
 			return user.getFriendsId().stream().filter(otherUser.getFriendsId()::contains).map(this::getUserById)
 					.collect(Collectors.toSet());
 		} catch (UserNotFoundException e) {
-			throw new UserNotFoundException("Пользователь не найден.");
+			throw new UserNotFoundException("The user was not found.");
 		}
 	}
 
@@ -95,6 +101,6 @@ public class UserService {
 		if (user.getName() == null || user.getName().isBlank()) {
 			user.setName(user.getLogin());
 		}
-		log.debug("{} пользователь: {}, email: {}", text, user.getName(), user.getEmail());
+		log.debug("{} user: {}, email: {}", text, user.getName(), user.getEmail());
 	}
 }
