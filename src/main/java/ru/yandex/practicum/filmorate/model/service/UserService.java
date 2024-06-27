@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.util.List;
@@ -79,8 +81,14 @@ public class UserService {
 	 * Получение общих друзей с другим пользователем
 	 */
 	public Set<User> getMutualFriends(Integer userId, Integer otherId) {
-		return getUserById(userId).getFriendsId().stream().filter(getUserById(otherId).getFriendsId()::contains)
-				.map(this::getUserById).collect(Collectors.toSet());
+		try {
+			User user = getUserById(userId);
+			User otherUser = getUserById(otherId);
+			return user.getFriendsId().stream().filter(otherUser.getFriendsId()::contains).map(this::getUserById)
+					.collect(Collectors.toSet());
+		} catch (UserNotFoundException e) {
+			throw new UserNotFoundException("Пользователь не найден.");
+		}
 	}
 
 	public void setUserNameByLogin(User user, String text) {
