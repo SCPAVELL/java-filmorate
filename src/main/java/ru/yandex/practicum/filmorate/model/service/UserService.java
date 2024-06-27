@@ -80,7 +80,13 @@ public class UserService {
 	 * Получение всех друзей пользователя
 	 */
 	public List<User> getUserFriends(Integer userId) {
-		return userStorage.getUserFriends(userId);
+		try {
+			User user = getUserById(userId);
+			return userStorage.getUserFriends(userId);
+		} catch (UserNotFoundException e) {
+			log.error("User with id={} not found", userId);
+			throw new UserNotFoundException("User with id=" + userId + " not found");
+		}
 	}
 
 	/**
