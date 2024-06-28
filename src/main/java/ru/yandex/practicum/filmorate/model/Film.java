@@ -1,7 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+
 import org.hibernate.validator.constraints.Length;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -28,6 +31,27 @@ public class Film {
 	private LocalDate releaseDate;
 	@Positive(message = "Продолжительность фильма должна быть положительным числом. ")
 	private long duration;
+
+	private Set<Integer> likes;
+
+	public Film(String name, String description, LocalDate releaseDate, Integer duration, Set<Integer> likes) {
+		this.name = name;
+		this.description = description;
+		this.releaseDate = releaseDate;
+		this.duration = duration;
+		this.likes = Objects.requireNonNullElseGet(likes, HashSet::new);
+	}
+
+	public void addLike(Integer id) {
+		if (likes == null) {
+			likes = new HashSet<>();
+		}
+		likes.add(id);
+	}
+
+	public void deleteLike(Integer id) {
+		likes.remove(id);
+	}
 
 	@Override
 	public int hashCode() {

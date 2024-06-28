@@ -1,36 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.stereotype.Component;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 import ru.yandex.practicum.filmorate.model.User;
 
-@Component
-@Getter
-@EqualsAndHashCode
-@ToString
-public class UserStorage {
-	private final Map<Integer, User> users = new HashMap<>();
-	private static int id;
+import java.util.List;
 
-	public int generateId() {
-		return ++id;
-	}
+public interface UserStorage {
+	User create(User user);
 
-	public User create(User user) {
-		int newTaskId = generateId();
-		user.setId(newTaskId);
-		users.put(newTaskId, user);
-		return user;
-	}
+	User update(User user);
 
-	public User update(User user) {
-		users.put(user.getId(), user);
-		return user;
-	}
+	List<User> getAllUsers();
+
+	User getUserById(Integer id);
+
+	List<User> getUserFriends(Integer userId);
 }
