@@ -55,25 +55,37 @@ public class UserService {
 		try {
 			User user = getUserById(userId);
 			User friend = getUserById(friendId);
-			user.addFriend(friendId);
-			friend.addFriend(userId);
-			log.debug("User with id {} added a user to the friends list with id {}", userId, friendId);
+			if (user != null && friend != null) {
+				user.addFriend(friendId);
+				friend.addFriend(userId);
+				log.debug("User with id {} added a user to the friends list with id {}", userId, friendId);
+			} else {
+				log.error("One of the users is not found");
+			}
 		} catch (UserNotFoundException e) {
 			log.error("User с id={} not found", userId);
 			throw new UserNotFoundException("User с id=" + userId + " not found");
 		}
-
 	}
 
 	/**
 	 * Удаление из списка друзей
 	 */
 	public void deleteFriend(Integer userId, Integer friendId) {
-		User user = getUserById(userId);
-		User friend = getUserById(friendId);
-		user.getFriends().remove(friendId);
-		friend.getFriends().remove(userId);
-		log.debug("User with id {} deleted from the friends list by a user with id {}", userId, friendId);
+		try {
+			User user = getUserById(userId);
+			User friend = getUserById(friendId);
+			if (user != null && friend != null) {
+				user.getFriends().remove(friendId);
+				friend.getFriends().remove(userId);
+				log.debug("User with id {} deleted from the friends list by a user with id {}", userId, friendId);
+			} else {
+				log.error("One of the users is not found");
+			}
+		} catch (UserNotFoundException e) {
+			log.error("User с id={} not found", userId);
+			throw new UserNotFoundException("User с id=" + userId + " not found");
+		}
 	}
 
 	/**

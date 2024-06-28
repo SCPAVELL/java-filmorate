@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -50,12 +52,19 @@ public class FilmService {
 			throw new FilmNotFoundException("Film for id=" + filmId + " failed");
 		}
 		try {
-			userStorage.getUserById(userId);
+			User user = userStorage.getUserById(userId);
+			if (user == null) {
+				log.error("User for id={} failed", userId);
+				throw new UserNotFoundException("User for id=" + userId + " failed");
+			}
 			filmStorage.addLike(filmId, userId);
 			log.info("like for film with id={} added", filmId);
 		} catch (FilmNotFoundException e) {
 			log.error("Film for id={} failed", filmId, e);
 			throw new FilmNotFoundException("Film for id=" + filmId + " failed");
+		} catch (UserNotFoundException e) {
+			log.error("User for id={} failed", userId, e);
+			throw new UserNotFoundException("User for id=" + userId + " failed");
 		}
 	}
 
@@ -67,12 +76,19 @@ public class FilmService {
 			throw new FilmNotFoundException("Film for id=" + filmId + " failed");
 		}
 		try {
-			userStorage.getUserById(userId);
+			User user = userStorage.getUserById(userId);
+			if (user == null) {
+				log.error("User for id={} failed", userId);
+				throw new UserNotFoundException("User for id=" + userId + " failed");
+			}
 			filmStorage.deleteLike(filmId, userId);
 			log.info("like for film with id={} deleted", filmId);
 		} catch (FilmNotFoundException e) {
 			log.error("Film for id={} failed", filmId, e);
 			throw new FilmNotFoundException("Film for id=" + filmId + " failed");
+		} catch (UserNotFoundException e) {
+			log.error("User for id={} failed", userId, e);
+			throw new UserNotFoundException("User for id=" + userId + " failed");
 		}
 	}
 

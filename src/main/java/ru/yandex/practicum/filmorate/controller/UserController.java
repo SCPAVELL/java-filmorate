@@ -41,7 +41,7 @@ public class UserController {
 	}
 
 	@PutMapping
-	public User updateUser(@RequestBody User user) {
+	public User updateUser(@Valid @RequestBody User user) {
 		userService.setUserNameByLogin(user, "Обновлен");
 		return userService.updateUser(user);
 	}
