@@ -1,8 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Valid
 public class User {
 
 	private int id;
@@ -22,6 +26,22 @@ public class User {
 	private String name;
 	@PastOrPresent(message = "Дата рождения не может быть в будущем.")
 	private LocalDate birthday;
+
+	private Set<Integer> friends;
+
+	public void addFriend(Integer id) {
+		if (friends == null) {
+			friends = new HashSet<>();
+		}
+		friends.add(id);
+	}
+
+	public Set<Integer> getFriendsId() {
+		if (friends == null) {
+			friends = new HashSet<>();
+		}
+		return friends;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
