@@ -2,8 +2,8 @@
 
 ### Схема БД
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="src/main/resources/schema.png">
-    <img src="src/main/resources/schema.png">
+    <source media="(prefers-color-scheme: dark)" srcset="src/main/resources/shema.PNG">
+    <img src="src/main/resources/shema.PNG">
 </picture>
 
 ### Код из dbdiagram.io

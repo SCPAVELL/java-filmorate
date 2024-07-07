@@ -35,34 +35,58 @@ public class UserService {
 	}
 
 	public User add(final User user) {
-		validate(user);
-		return userStorage.addUser(user);
+		try {
+			validate(user);
+			return userStorage.addUser(user);
+		} catch (UserValidationException e) {
+			throw new RuntimeException("Ошибка валидации пользователя", e);
+		} catch (Exception e) {
+			throw new RuntimeException("Неизвестная ошибка при добавлении пользователя", e);
+		}
 	}
 
 	public User update(final User user) {
-		validate(user);
-		return userStorage.updateUser(user);
+		try {
+			validate(user);
+			return userStorage.updateUser(user);
+		} catch (UserValidationException e) {
+			throw new RuntimeException("Ошибка валидации пользователя", e);
+		} catch (Exception e) {
+			throw new RuntimeException("Неизвестная ошибка при обновлении пользователя", e);
+		}
 	}
 
 	public void addFriend(final String supposedUserId, final String supposedFriendId) {
-		User user = getStoredUser(supposedUserId);
-		User friend = getStoredUser(supposedFriendId);
-		userStorage.addFriend(user.getId(), friend.getId());
+		try {
+			User user = getStoredUser(supposedUserId);
+			User friend = getStoredUser(supposedFriendId);
+			userStorage.addFriend(user.getId(), friend.getId());
+		} catch (Exception e) {
+			throw new RuntimeException("Неизвестная ошибка при добавлении друзей", e);
+		}
 	}
 
 	public void deleteFriend(final String supposedUserId, final String supposedFriendId) {
-		User user = getStoredUser(supposedUserId);
-		User friend = getStoredUser(supposedFriendId);
-		userStorage.deleteFriend(user.getId(), friend.getId());
+		try {
+			User user = getStoredUser(supposedUserId);
+			User friend = getStoredUser(supposedFriendId);
+			userStorage.deleteFriend(user.getId(), friend.getId());
+		} catch (Exception e) {
+			throw new RuntimeException("Неизвестная ошибка при удалении друзей", e);
+		}
 	}
 
 	public Collection<User> getFriends(final String supposedUserId) {
-		User user = getStoredUser(supposedUserId);
-		Collection<User> friends = new HashSet<>();
-		for (Integer id : user.getFriends()) {
-			friends.add(userStorage.getUser(id));
+		try {
+			User user = getStoredUser(supposedUserId);
+			Collection<User> friends = new HashSet<>();
+			for (Integer id : user.getFriends()) {
+				friends.add(userStorage.getUser(id));
+			}
+			return friends;
+		} catch (Exception e) {
+			throw new RuntimeException("Неизвестная ошибка при получении друзей", e);
 		}
-		return friends;
 	}
 
 	public Collection<User> getCommonFriends(final String supposedUserId, final String supposedOtherId) {
