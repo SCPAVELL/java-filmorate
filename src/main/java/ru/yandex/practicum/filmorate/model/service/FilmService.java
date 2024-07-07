@@ -70,7 +70,7 @@ public class FilmService {
 		return getStoredFilm(id);
 	}
 
-	private void validate(Film film) {
+	public void validate(Film film) {
 		Set<ConstraintViolation<Film>> violations = validator.validate(film);
 		if (!violations.isEmpty()) {
 			StringBuilder messageBuilder = new StringBuilder();

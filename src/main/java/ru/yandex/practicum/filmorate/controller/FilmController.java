@@ -48,6 +48,7 @@ public class FilmController {
 	@PostMapping
 	public Film create(@RequestBody Film film) {
 		log.info("Получен запрос POST. Данные тела запроса: {}", film);
+		filmService.validate(film);
 		Film validFilm = filmService.add(film);
 		log.info("Создан объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
 		return validFilm;
