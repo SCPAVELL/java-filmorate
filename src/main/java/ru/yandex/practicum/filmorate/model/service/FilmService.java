@@ -2,7 +2,10 @@ package ru.yandex.practicum.filmorate.model.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import ru.yandex.practicum.filmorate.exception.FilmValidationException;
@@ -37,7 +40,11 @@ public class FilmService {
 	}
 
 	public Film add(Film film) {
-		validate(film);
+		try {
+			validate(film);
+		} catch (NotFoundException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+		}
 		return filmStorage.addFilm(film);
 	}
 

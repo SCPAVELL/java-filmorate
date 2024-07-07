@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.service.FilmService;
 import java.util.Collection;
@@ -48,10 +50,14 @@ public class FilmController {
 	@PostMapping
 	public Film create(@RequestBody Film film) {
 		log.info("Получен запрос POST. Данные тела запроса: {}", film);
-		filmService.validate(film);
-		Film validFilm = filmService.add(film);
-		log.info("Создан объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
-		return validFilm;
+		try {
+			Film validFilm = filmService.add(film);
+			log.info("Создан объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
+			return validFilm;
+		} catch (ResponseStatusException e) {
+			log.error("Ошибка при создании фильма: {}", e.getMessage());
+			throw e;
+		}
 	}
 
 	@PutMapping
