@@ -69,13 +69,4 @@ public class ErrorHandler {
 		return error;
 	}
 
-	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	@ExceptionHandler(value = { Exception.class })
-	public ErrorMessage handleGenericException(Exception exception, WebRequest request) {
-		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(),
-				exception.getMessage(), request.getDescription(false));
-		log.error("Внутренняя ошибка сервера: {} {}", exception.getMessage(), request.getDescription(false));
-		return error;
-	}
-
 }

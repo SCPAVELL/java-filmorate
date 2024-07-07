@@ -2,7 +2,11 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.service.UserService;
 import java.util.Collection;
@@ -61,8 +65,18 @@ public class UserController {
 	@PutMapping("/{id}/friends/{friendId}")
 	public void addFriend(@PathVariable String id, @PathVariable String friendId) {
 		log.info("Получен запрос PUT к эндпоинту: /users/{}/friends/{}", id, friendId);
-		userService.addFriend(id, friendId);
-		log.info("Обновлен объект {} с идентификатором {}. Добавлен друг {}", User.class.getSimpleName(), id, friendId);
+		try {
+			userService.addFriend(id, friendId);
+			log.info("Обновлен объект {} с идентификатором {}. Добавлен друг {}", User.class.getSimpleName(), id,
+					friendId);
+		} catch (NotFoundException e) {
+			log.error("Ошибка при добавлении друга: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		} catch (Exception e) {
+			log.error("Неизвестная ошибка при добавлении друзей: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Неизвестная ошибка при добавлении друзей", e);
+		}
 	}
 
 	@DeleteMapping("/{id}/friends/{friendId}")
