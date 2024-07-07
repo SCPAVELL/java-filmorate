@@ -47,7 +47,7 @@ public class ErrorHandler {
 
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	@ExceptionHandler(value = { NotFoundException.class })
-	public ErrorMessage handleNotFoundException(Exception exception, WebRequest request) {
+	public ErrorMessage handleNotFoundException(NotFoundException exception, WebRequest request) {
 		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.NOT_FOUND.value(), exception.getMessage(),
 				request.getDescription(false));
 		log.error("Ошибка запроса: {} {}", exception.getMessage(), request.getDescription(false));
@@ -66,6 +66,15 @@ public class ErrorHandler {
 		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.BAD_REQUEST.value(), String.valueOf(errors),
 				request.getDescription(false));
 		log.error("Ошибка запроса: {}", errors);
+		return error;
+	}
+
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	@ExceptionHandler(value = { Exception.class })
+	public ErrorMessage handleGenericException(Exception exception, WebRequest request) {
+		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				exception.getMessage(), request.getDescription(false));
+		log.error("Внутренняя ошибка сервера: {} {}", exception.getMessage(), request.getDescription(false));
 		return error;
 	}
 
