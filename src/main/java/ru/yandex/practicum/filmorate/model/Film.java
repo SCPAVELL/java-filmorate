@@ -9,6 +9,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.annotations.ReleaseDateValidation;
 
 /**
  * Film.
@@ -26,6 +27,7 @@ public class Film {
 	@Length(min = 1, max = 200, message = "Описание фильма не должно превышать 200 символов. ")
 	private String description;
 	@PastOrPresent(message = "Дата релиза не раньше 28 декабря 1895 года. ")
+	@ReleaseDateValidation
 	private LocalDate releaseDate;
 	@Positive(message = "Продолжительность фильма должна быть положительным числом. ")
 	private long duration;
