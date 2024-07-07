@@ -3,7 +3,9 @@ package ru.yandex.practicum.filmorate.model.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -35,14 +37,8 @@ public class UserService {
 	}
 
 	public User add(final User user) {
-		try {
-			validate(user);
-			return userStorage.addUser(user);
-		} catch (UserValidationException e) {
-			throw new RuntimeException("Ошибка валидации пользователя", e);
-		} catch (Exception e) {
-			throw new RuntimeException("Неизвестная ошибка при добавлении пользователя", e);
-		}
+		validate(user);
+		return userStorage.addUser(user);
 	}
 
 	public User update(final User user) {
@@ -50,43 +46,34 @@ public class UserService {
 			validate(user);
 			return userStorage.updateUser(user);
 		} catch (UserValidationException e) {
-			throw new RuntimeException("Ошибка валидации пользователя", e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ошибка валидации пользователя", e);
+		} catch (NotFoundException e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден", e);
 		} catch (Exception e) {
-			throw new RuntimeException("Неизвестная ошибка при обновлении пользователя", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Неизвестная ошибка при обновлении пользователя", e);
 		}
 	}
 
 	public void addFriend(final String supposedUserId, final String supposedFriendId) {
-		try {
-			User user = getStoredUser(supposedUserId);
-			User friend = getStoredUser(supposedFriendId);
-			userStorage.addFriend(user.getId(), friend.getId());
-		} catch (Exception e) {
-			throw new RuntimeException("Неизвестная ошибка при добавлении друзей", e);
-		}
+		User user = getStoredUser(supposedUserId);
+		User friend = getStoredUser(supposedFriendId);
+		userStorage.addFriend(user.getId(), friend.getId());
 	}
 
 	public void deleteFriend(final String supposedUserId, final String supposedFriendId) {
-		try {
-			User user = getStoredUser(supposedUserId);
-			User friend = getStoredUser(supposedFriendId);
-			userStorage.deleteFriend(user.getId(), friend.getId());
-		} catch (Exception e) {
-			throw new RuntimeException("Неизвестная ошибка при удалении друзей", e);
-		}
+		User user = getStoredUser(supposedUserId);
+		User friend = getStoredUser(supposedFriendId);
+		userStorage.deleteFriend(user.getId(), friend.getId());
 	}
 
 	public Collection<User> getFriends(final String supposedUserId) {
-		try {
-			User user = getStoredUser(supposedUserId);
-			Collection<User> friends = new HashSet<>();
-			for (Integer id : user.getFriends()) {
-				friends.add(userStorage.getUser(id));
-			}
-			return friends;
-		} catch (Exception e) {
-			throw new RuntimeException("Неизвестная ошибка при получении друзей", e);
+		User user = getStoredUser(supposedUserId);
+		Collection<User> friends = new HashSet<>();
+		for (Integer id : user.getFriends()) {
+			friends.add(userStorage.getUser(id));
 		}
+		return friends;
 	}
 
 	public Collection<User> getCommonFriends(final String supposedUserId, final String supposedOtherId) {

@@ -57,9 +57,18 @@ public class UserController {
 	@PutMapping
 	public User put(@RequestBody User user) {
 		log.info("Получен запрос PUT. Данные тела запроса: {}", user);
-		final User validUser = userService.update(user);
-		log.info("Обновлен объект {} с идентификатором {}", User.class.getSimpleName(), validUser.getId());
-		return validUser;
+		try {
+			final User validUser = userService.update(user);
+			log.info("Обновлен объект {} с идентификатором {}", User.class.getSimpleName(), validUser.getId());
+			return validUser;
+		} catch (ResponseStatusException e) {
+			log.error("Ошибка при обновлении пользователя: {}", e.getMessage());
+			throw e;
+		} catch (Exception e) {
+			log.error("Неизвестная ошибка при обновлении пользователя: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Неизвестная ошибка при обновлении пользователя", e);
+		}
 	}
 
 	@PutMapping("/{id}/friends/{friendId}")
