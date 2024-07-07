@@ -2,7 +2,10 @@ package ru.yandex.practicum.filmorate.model.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import ru.yandex.practicum.filmorate.exception.FilmValidationException;
@@ -11,6 +14,8 @@ import ru.yandex.practicum.filmorate.exception.WrongIdException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Set;
 
@@ -81,6 +86,12 @@ public class FilmService {
 		}
 		if (film.getId() == 0) {
 			film.setId(getNextId());
+		}
+
+		// Проверка даты релиза
+		if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+			throw new ResponseStatusException(HttpStatus.OK,
+					"Дата релиза фильма не может быть раньше 28 декабря 1895 года.");
 		}
 	}
 
