@@ -48,7 +48,7 @@ public class GenreService {
 		try {
 			return Integer.valueOf(supposedInt);
 		} catch (NumberFormatException exception) {
-			return Integer.MIN_VALUE;
+			throw new NotFoundException("Некорректный идентификатор: " + supposedInt);
 		}
 	}
 }
