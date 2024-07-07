@@ -1,60 +1,64 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.UserFoundException;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
 	private final Map<Integer, User> users = new HashMap<>();
-	private static int id;
 
-	public int generateId() {
-		return ++id;
+	@Override
+	public User getUser(final Integer id) {
+		return users.get(id);
 	}
 
 	@Override
-	public User create(User user) {
-		if (users.containsKey(user.getId())) {
-			throw new UserFoundException(String.format("Пользователь с id=%d есть в базе", user.getId()));
+	public Collection<User> getAllUsers() {
+		Collection<User> allUsers = users.values();
+		if (allUsers.isEmpty()) {
+			allUsers.addAll(users.values());
 		}
-		int newTaskId = generateId();
-		user.setId(newTaskId);
-		users.put(newTaskId, user);
+		return allUsers;
+	}
+
+	@Override
+	public User addUser(User user) {
+		users.put(user.getId(), user);
 		return user;
 	}
 
 	@Override
-	public User update(User user) {
-		if (!users.containsKey(user.getId())) {
-			throw new UserNotFoundException(String.format("Пользователя с id=%d нет в базе", user.getId()));
+	public User updateUser(User user) {
+		if (!getAllUsers().contains(user)) {
+			throw new NotFoundException("Пользователь с идентификатором " + user.getId() + " не зарегистрирован!");
 		}
 		users.put(user.getId(), user);
 		return user;
 	}
 
 	@Override
-	public List<User> getAllUsers() {
-		return new ArrayList<>(users.values());
+	public boolean deleteUser(User user) {
+		users.remove(user.getId());
+		return true;
 	}
 
 	@Override
-	public User getUserById(Integer id) {
-		if (!users.containsKey(id)) {
-			throw new UserNotFoundException(String.format("Пользователь с id=%d не найден", id));
-		}
-		return users.get(id);
+	public boolean addFriend(int userId, int friendId) {
+		User user = users.get(userId);
+		User friend = users.get(friendId);
+		user.addFriend(friendId);
+		friend.addFriend(userId);
+		updateUser(user);
+		updateUser(friend);
+		return true;
 	}
 
 	@Override
-	public List<User> getUserFriends(Integer userId) {
-		return users.get(userId).getFriends().stream().map(users::get).collect(Collectors.toList());
+	public boolean deleteFriend(int userId, int friendId) {
+		return false;
 	}
 }

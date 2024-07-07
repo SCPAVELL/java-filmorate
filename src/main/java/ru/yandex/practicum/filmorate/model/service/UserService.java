@@ -1,124 +1,126 @@
 package ru.yandex.practicum.filmorate.model.service;
 
-import lombok.AllArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserValidationException;
+import ru.yandex.practicum.filmorate.exception.WrongIdException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-@Service
 @Slf4j
-@AllArgsConstructor
+@Service
 public class UserService {
+	private int increment = 0;
+	private final Validator validator;
+
 	private final UserStorage userStorage;
 
-	/**
-	 * Получение всех пользователей
-	 */
-	public List<User> getAllUsers() {
+	@Autowired
+	public UserService(Validator validator, @Qualifier("DBUserStorage") UserStorage userStorage) {
+		this.validator = validator;
+		this.userStorage = userStorage;
+	}
+
+	public Collection<User> getAllUsers() {
 		return userStorage.getAllUsers();
 	}
 
-	/**
-	 * Получение пользователя
-	 */
-	public User getUserById(Integer userId) {
-		return userStorage.getUserById(userId);
+	public User add(final User user) {
+		validate(user);
+		return userStorage.addUser(user);
 	}
 
-	/**
-	 * Создание нового пользователя
-	 */
-	public User createUser(User user) {
-		setUserNameByLogin(user, "Added");
-		return userStorage.create(user);
+	public User update(final User user) {
+		validate(user);
+		return userStorage.updateUser(user);
 	}
 
-	/**
-	 * Редактирование пользователя
-	 */
-	public User updateUser(User user) {
-		setUserNameByLogin(user, "Updated");
-		return userStorage.update(user);
+	public void addFriend(final String supposedUserId, final String supposedFriendId) {
+		User user = getStoredUser(supposedUserId);
+		User friend = getStoredUser(supposedFriendId);
+		userStorage.addFriend(user.getId(), friend.getId());
 	}
 
-	/**
-	 * Добавление в список друзей
-	 */
-	public void addFriend(Integer userId, Integer friendId) {
-		try {
-			User user = getUserById(userId);
-			User friend = getUserById(friendId);
-			if (user != null && friend != null) {
-				user.addFriend(friendId);
-				friend.addFriend(userId);
-				log.debug("User with id {} added a user to the friends list with id {}", userId, friendId);
-			} else {
-				log.error("One of the users is not found");
+	public void deleteFriend(final String supposedUserId, final String supposedFriendId) {
+		User user = getStoredUser(supposedUserId);
+		User friend = getStoredUser(supposedFriendId);
+		userStorage.deleteFriend(user.getId(), friend.getId());
+	}
+
+	public Collection<User> getFriends(final String supposedUserId) {
+		User user = getStoredUser(supposedUserId);
+		Collection<User> friends = new HashSet<>();
+		for (Integer id : user.getFriends()) {
+			friends.add(userStorage.getUser(id));
+		}
+		return friends;
+	}
+
+	public Collection<User> getCommonFriends(final String supposedUserId, final String supposedOtherId) {
+		User user = getStoredUser(supposedUserId);
+		User otherUser = getStoredUser(supposedOtherId);
+		Collection<User> commonFriends = new HashSet<>();
+		for (Integer id : user.getFriends()) {
+			if (otherUser.getFriends().contains(id)) {
+				commonFriends.add(userStorage.getUser(id));
 			}
-		} catch (UserNotFoundException e) {
-			log.error("User с id={} not found", userId);
-			throw new UserNotFoundException("User с id=" + userId + " not found");
 		}
+		return commonFriends;
 	}
 
-	/**
-	 * Удаление из списка друзей
-	 */
-	public void deleteFriend(Integer userId, Integer friendId) {
-		try {
-			User user = getUserById(userId);
-			User friend = getUserById(friendId);
-			if (user != null && friend != null) {
-				user.getFriends().remove(friendId);
-				friend.getFriends().remove(userId);
-				log.debug("User with id {} deleted from the friends list by a user with id {}", userId, friendId);
-			} else {
-				log.error("One of the users is not found");
-			}
-		} catch (UserNotFoundException e) {
-			log.error("User с id={} not found", userId);
-			throw new UserNotFoundException("User с id=" + userId + " not found");
-		}
+	public User getUser(final String supposedId) {
+		return getStoredUser(supposedId);
 	}
 
-	/**
-	 * Получение всех друзей пользователя
-	 */
-	public List<User> getUserFriends(Integer userId) {
-		try {
-			User user = getUserById(userId);
-			return userStorage.getUserFriends(userId);
-		} catch (UserNotFoundException e) {
-			log.error("User with id={} not found", userId);
-			throw new UserNotFoundException("User with id=" + userId + " not found");
-		}
-	}
-
-	/**
-	 * Получение общих друзей с другим пользователем
-	 */
-	public Set<User> getMutualFriends(Integer userId, Integer otherId) {
-		try {
-			User user = getUserById(userId);
-			User otherUser = getUserById(otherId);
-			return user.getFriendsId().stream().filter(otherUser.getFriendsId()::contains).map(this::getUserById)
-					.collect(Collectors.toSet());
-		} catch (UserNotFoundException e) {
-			throw new UserNotFoundException("The user was not found.");
-		}
-	}
-
-	public void setUserNameByLogin(User user, String text) {
-		if (user.getName() == null || user.getName().isBlank()) {
+	private void validate(final User user) {
+		if (user.getName() == null) {
 			user.setName(user.getLogin());
+			log.info("UserService: Поле name не задано. Установлено значение {} из поля login", user.getLogin());
+		} else if (user.getName().isEmpty() || user.getName().isBlank()) {
+			user.setName(user.getLogin());
+			log.info(
+					"UserService: Поле name не содержит буквенных символов. " + "Установлено значение {} из поля login",
+					user.getLogin());
 		}
-		log.debug("{} user: {}, email: {}", text, user.getName(), user.getEmail());
+		Set<ConstraintViolation<User>> violations = validator.validate(user);
+		if (!violations.isEmpty()) {
+			StringBuilder messageBuilder = new StringBuilder();
+			for (ConstraintViolation<User> userConstraintViolation : violations) {
+				messageBuilder.append(userConstraintViolation.getMessage());
+			}
+			throw new UserValidationException("Ошибка валидации Пользователя: " + messageBuilder, violations);
+		}
+		if (user.getId() == 0) {
+			user.setId(++increment);
+		}
+	}
+
+	private Integer idFromString(final String supposedId) {
+		try {
+			return Integer.valueOf(supposedId);
+		} catch (NumberFormatException exception) {
+			return Integer.MIN_VALUE;
+		}
+	}
+
+	private User getStoredUser(final String supposedId) {
+		final int userId = idFromString(supposedId);
+		if (userId == Integer.MIN_VALUE) {
+			throw new WrongIdException("Не удалось распознать идентификатор пользователя: " + "значение " + supposedId);
+		}
+		User user = userStorage.getUser(userId);
+		if (user == null) {
+			throw new NotFoundException("Пользователь с идентификатором " + userId + " не зарегистрирован!");
+		}
+		return user;
 	}
 }
