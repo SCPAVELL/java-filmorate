@@ -62,18 +62,36 @@ public class UserService {
 	}
 
 	public void deleteFriend(final String supposedUserId, final String supposedFriendId) {
-		User user = getStoredUser(supposedUserId);
-		User friend = getStoredUser(supposedFriendId);
-		userStorage.deleteFriend(user.getId(), friend.getId());
+		try {
+			User user = getStoredUser(supposedUserId);
+			User friend = getStoredUser(supposedFriendId);
+			userStorage.deleteFriend(user.getId(), friend.getId());
+		} catch (NotFoundException e) {
+			log.error("Ошибка при удалении друга: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		} catch (Exception e) {
+			log.error("Неизвестная ошибка при удалении друзей: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Неизвестная ошибка при удалении друзей", e);
+		}
 	}
 
 	public Collection<User> getFriends(final String supposedUserId) {
-		User user = getStoredUser(supposedUserId);
-		Collection<User> friends = new HashSet<>();
-		for (Integer id : user.getFriends()) {
-			friends.add(userStorage.getUser(id));
+		try {
+			User user = getStoredUser(supposedUserId);
+			Collection<User> friends = new HashSet<>();
+			for (Integer id : user.getFriends()) {
+				friends.add(userStorage.getUser(id));
+			}
+			return friends;
+		} catch (NotFoundException e) {
+			log.error("Ошибка при получении друзей: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		} catch (Exception e) {
+			log.error("Неизвестная ошибка при получении друзей: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Неизвестная ошибка при получении друзей", e);
 		}
-		return friends;
 	}
 
 	public Collection<User> getCommonFriends(final String supposedUserId, final String supposedOtherId) {
