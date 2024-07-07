@@ -1,7 +1,13 @@
+# java-filmorate
 
-![Схема базы данных](resources/shema.png)
+### Схема БД
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="src/main/resources/schema.png">
+    <img src="src/main/resources/schema.png">
+</picture>
 
-# Код из dbdiagram.io
+### Код из dbdiagram.io
+```
 Table film {
 id int [pk, increment]
 name varchar [not null]
@@ -51,3 +57,4 @@ Ref: likes.film_id > film.id
 Ref: likes.user_id > user.id
 Ref: user_friends.user_id > user.id
 Ref: user_friends.friend_id > user.id
+```
