@@ -21,12 +21,16 @@ public class MpaService {
 	}
 
 	public Mpa getMpa(String supposedId) {
-		int id = intFromString(supposedId);
-		Mpa mpa = mpaStorage.getMpaById(id);
-		if (mpa == null) {
-			throw new NotFoundException("MPA с id " + id + " не найден");
+		try {
+			int id = intFromString(supposedId);
+			Mpa mpa = mpaStorage.getMpaById(id);
+			if (mpa == null) {
+				throw new NotFoundException("MPA с id " + id + " не найден");
+			}
+			return mpa;
+		} catch (NumberFormatException e) {
+			throw new NotFoundException("Некорректный идентификатор: " + supposedId);
 		}
-		return mpa;
 	}
 
 	private Integer intFromString(final String supposedInt) {
