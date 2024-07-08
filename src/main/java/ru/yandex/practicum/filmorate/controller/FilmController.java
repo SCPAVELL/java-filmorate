@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,7 +56,7 @@ public class FilmController {
 			Film validFilm = filmService.add(film);
 			log.info("Создан объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
 			return validFilm;
-		} catch (ResponseStatusException e) {
+		} catch (DataIntegrityViolationException e) {
 			log.error("Ошибка при создании фильма: {}", e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
 		} catch (Exception e) {

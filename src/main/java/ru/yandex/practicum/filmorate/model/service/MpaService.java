@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.model.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -29,7 +31,7 @@ public class MpaService {
 			}
 			return mpa;
 		} catch (NumberFormatException e) {
-			throw new NotFoundException("Некорректный идентификатор: " + supposedId);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный идентификатор: " + supposedId, e);
 		}
 	}
 

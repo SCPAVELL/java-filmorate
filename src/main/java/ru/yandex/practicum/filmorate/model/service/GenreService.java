@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.model.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -28,12 +30,17 @@ public class GenreService {
 	}
 
 	public Genre getGenre(String supposedId) {
-		int genreId = intFromString(supposedId);
-		Genre genre = genreStorage.getGenreById(genreId);
-		if (genre == null) {
-			throw new NotFoundException("Жанр с id " + genreId + " не найден");
+		try {
+			int genreId = intFromString(supposedId);
+			Genre genre = genreStorage.getGenreById(genreId);
+			if (genre == null) {
+				throw new NotFoundException("Жанр с id " + genreId + " не найден");
+			}
+			return genre;
+		} catch (NumberFormatException e) {
+
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный идентификатор: " + supposedId, e);
 		}
-		return genre;
 	}
 
 	public boolean deleteFilmGenres(int filmId) {
