@@ -74,10 +74,11 @@ public class FilmController {
 			return validFilm;
 		} catch (DataIntegrityViolationException e) {
 			log.error("Ошибка при обновлении фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
 		} catch (Exception e) {
 			log.error("Непредвиденная ошибка при обновлении фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Непредвиденная ошибка при обновлении фильма", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Непредвиденная ошибка при обновлении фильма", e);
 		}
 	}
 
