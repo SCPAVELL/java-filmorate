@@ -58,20 +58,27 @@ public class FilmController {
 			return validFilm;
 		} catch (DataIntegrityViolationException e) {
 			log.error("Ошибка при создании фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		} catch (Exception e) {
 			log.error("Непредвиденная ошибка при создании фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"Непредвиденная ошибка при создании фильма", e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Непредвиденная ошибка при создании фильма", e);
 		}
 	}
 
 	@PutMapping
 	public Film put(@RequestBody Film film) {
 		log.info("Получен запрос PUT. Данные тела запроса: {}", film);
-		Film validFilm = filmService.update(film);
-		log.info("Обновлен объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
-		return validFilm;
+		try {
+			Film validFilm = filmService.update(film);
+			log.info("Обновлен объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
+			return validFilm;
+		} catch (DataIntegrityViolationException e) {
+			log.error("Ошибка при обновлении фильма: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+		} catch (Exception e) {
+			log.error("Непредвиденная ошибка при обновлении фильма: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Непредвиденная ошибка при обновлении фильма", e);
+		}
 	}
 
 	@PutMapping("/{id}/like/{userId}")
