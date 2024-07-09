@@ -77,7 +77,8 @@ public class DBFilmStorage implements FilmStorage {
 		if (!film.getGenres().isEmpty()) {
 			genreService.addFilmGenres(film.getId(), film.getGenres());
 		}
-		if (film.getLikes() != null) {
+
+		if (film.getLikes() != null && !film.getLikes().isEmpty()) {
 			for (Integer userId : film.getLikes()) {
 				addLike(film.getId(), userId);
 			}
@@ -98,7 +99,7 @@ public class DBFilmStorage implements FilmStorage {
 			genreService.addFilmGenres(film.getId(), film.getGenres());
 		}
 
-		if (film.getLikes() != null) {
+		if (film.getLikes() != null && !film.getLikes().isEmpty()) {
 			for (Integer userId : film.getLikes()) {
 				addLike(film.getId(), userId);
 			}

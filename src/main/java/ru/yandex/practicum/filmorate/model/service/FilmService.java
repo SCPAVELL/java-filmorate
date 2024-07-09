@@ -55,22 +55,30 @@ public class FilmService {
 
 	public void addLike(final String id, final String userId) {
 		Film film = getStoredFilm(id);
+		if (film == null) {
+			throw new NotFoundException("Фильм с id " + id + " не найден");
+		}
 		User user = userService.getUser(userId);
+		if (user == null) {
+			throw new NotFoundException("Пользователь с id " + userId + " не найден");
+		}
 		filmStorage.addLike(film.getId(), user.getId());
 	}
 
 	public void deleteLike(final String id, final String userId) {
 		Film film = getStoredFilm(id);
+		if (film == null) {
+			throw new NotFoundException("Фильм с id " + id + " не найден");
+		}
 		User user = userService.getUser(userId);
+		if (user == null) {
+			throw new NotFoundException("Пользователь с id " + userId + " не найден");
+		}
 		filmStorage.deleteLike(film.getId(), user.getId());
 	}
 
-	public Collection<Film> getMostPopularFilms(final String count) {
-		Integer size = intFromString(count);
-		if (size == Integer.MIN_VALUE) {
-			size = 10;
-		}
-		return filmStorage.getMostPopularFilms(size);
+	public Collection<Film> getMostPopularFilms(final int count) {
+		return filmStorage.getMostPopularFilms(count);
 	}
 
 	public Film getFilm(String id) {
