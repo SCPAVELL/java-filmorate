@@ -1,16 +1,15 @@
 package ru.yandex.practicum.filmorate.model;
 
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-
 import org.hibernate.validator.constraints.Length;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.yandex.practicum.filmorate.annotations.CorrectReleaseDay;
+import ru.yandex.practicum.filmorate.annotations.ReleaseDateValidation;
 
 /**
  * Film.
@@ -27,48 +26,39 @@ public class Film {
 	private String name;
 	@Length(min = 1, max = 200, message = "Описание фильма не должно превышать 200 символов. ")
 	private String description;
-	@CorrectReleaseDay(message = "Дата релиза не раньше 28 декабря 1895 года. ")
+	@PastOrPresent(message = "Дата релиза не раньше 28 декабря 1895 года. ")
+	@ReleaseDateValidation
 	private LocalDate releaseDate;
 	@Positive(message = "Продолжительность фильма должна быть положительным числом. ")
 	private long duration;
 
-	private Set<Integer> likes;
+	private int rate;
+	@NotNull
+	private Mpa mpa;
+	private List<Genre> genres = new ArrayList<>();
+	private List<Integer> likes = new ArrayList<>();
 
-	public Film(String name, String description, LocalDate releaseDate, Integer duration, Set<Integer> likes) {
-		this.name = name;
-		this.description = description;
-		this.releaseDate = releaseDate;
-		this.duration = duration;
-		this.likes = Objects.requireNonNullElseGet(likes, HashSet::new);
+	public boolean addLike(Integer userId) {
+		return likes.add(userId);
 	}
 
-	public void addLike(Integer id) {
-		if (likes == null) {
-			likes = new HashSet<>();
-		}
-		likes.add(id);
+	public boolean deleteLike(Integer userId) {
+		return likes.remove(userId);
 	}
 
-	public void deleteLike(Integer id) {
-		likes.remove(id);
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Film))
+			return false;
+		Film film = (Film) o;
+		return getId() == film.getId();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(description, duration, id, name, releaseDate);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Film other = (Film) obj;
-		return Objects.equals(description, other.description) && duration == other.duration && id == other.id
-				&& Objects.equals(name, other.name) && Objects.equals(releaseDate, other.releaseDate);
+		return Objects.hash(getId());
 	}
 
 }

@@ -1,11 +1,8 @@
 package ru.yandex.practicum.filmorate.model;
 
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Valid
 public class User {
 
 	private int id;
@@ -26,39 +22,29 @@ public class User {
 	private String name;
 	@PastOrPresent(message = "Дата рождения не может быть в будущем.")
 	private LocalDate birthday;
+	private List<Integer> friends;
 
-	private Set<Integer> friends;
-
-	public void addFriend(Integer id) {
-		if (friends == null) {
-			friends = new HashSet<>();
-		}
-		friends.add(id);
+	public boolean addFriend(final Integer id) {
+		return friends.add(id);
 	}
 
-	public Set<Integer> getFriendsId() {
-		if (friends == null) {
-			friends = new HashSet<>();
-		}
-		return friends;
+	public boolean deleteFriend(final Integer id) {
+		return friends.remove(id);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(Object o) {
+		if (this == o)
 			return true;
-		if (obj == null)
+		if (!(o instanceof User))
 			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		User other = (User) obj;
-		return Objects.equals(birthday, other.birthday) && Objects.equals(email, other.email) && id == other.id
-				&& Objects.equals(login, other.login) && Objects.equals(name, other.name);
+		User user = (User) o;
+		return getId() == user.getId();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(birthday, email, id, login, name);
+		return Objects.hash(getId());
 	}
 
 }

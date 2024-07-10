@@ -1,78 +1,75 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.FilmFoundException;
-import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 	private final Map<Integer, Film> films = new HashMap<>();
-	private static int id;
 
-	public int generateId() {
-		return ++id;
+	@Override
+	public Film getFilm(int filmId) {
+		return films.get(filmId);
 	}
 
 	@Override
-	public Film create(Film film) {
-		if (films.containsKey(film.getId())) {
-			throw new FilmFoundException(String.format("Фильм с id=%d есть в базе", film.getId()));
+	public Collection<Film> getAllFilms() {
+		Collection<Film> allFilms = films.values();
+		if (allFilms.isEmpty()) {
+			allFilms.addAll(films.values());
 		}
-		int newTaskId = generateId();
-		film.setId(newTaskId);
-		films.put(newTaskId, film);
+		return allFilms;
+	}
+
+	@Override
+	public Film addFilm(Film film) {
+		films.put(film.getId(), film);
 		return film;
 	}
 
 	@Override
-	public Film update(Film film) {
-		if (!films.containsKey(film.getId())) {
-			throw new FilmNotFoundException(String.format("Фильма с id=%d нет в базе", film.getId()));
+	public Film updateFilm(Film film) {
+		if (!getAllFilms().contains(film)) {
+			throw new NotFoundException("Фильм с идентификатором " + film.getId() + " не зарегистрирован!");
 		}
 		films.put(film.getId(), film);
 		return film;
 	}
 
 	@Override
-	public List<Film> getAllFilms() {
-		List<Film> filmsList = new ArrayList<>(films.values());
-		return filmsList;
+	public boolean deleteFilm(Film film) {
+		films.remove(film.getId());
+		return true;
 	}
 
 	@Override
-	public Film getFilmById(Integer id) {
-		if (!films.containsKey(id)) {
-			throw new FilmNotFoundException(String.format("Фильм с id=%d не найден", id));
-		}
-		return films.get(id);
-	}
-
-	@Override
-	public List<Film> getFilmsPopular(Integer count) {
-		return getAllFilms().stream().filter(film -> film.getLikes() != null)
-				.sorted((t1, t2) -> t2.getLikes().size() - t1.getLikes().size()).limit(count)
-				.collect(Collectors.toList());
-	}
-
-	@Override
-	public void addLike(Integer filmId, Integer userId) {
-		films.get(filmId).addLike(userId);
-	}
-
-	@Override
-	public void deleteLike(Integer filmId, Integer userId) {
+	public boolean addLike(int filmId, int userId) {
 		Film film = films.get(filmId);
-		if (!film.getLikes().contains(userId)) {
-			throw new NotFoundException("id", String.format("user with id=%d not found", userId));
-		}
-		film.deleteLike(userId);
+		film.addLike(userId);
+		updateFilm(film);
+		return true;
 	}
+
+	@Override
+	public boolean deleteLike(int filmId, int userId) {
+		Film film = films.get(filmId);
+		film.deleteLike(userId);
+		updateFilm(film);
+		return true;
+	}
+
+	@Override
+	public Collection<Film> getMostPopularFilms(int size) {
+		Collection<Film> mostPopularFilms = getAllFilms().stream()
+				.sorted((f1, f2) -> f2.getLikes().size() - f1.getLikes().size()).limit(size)
+				.collect(Collectors.toCollection(HashSet::new));
+		return mostPopularFilms;
+	}
+
 }
