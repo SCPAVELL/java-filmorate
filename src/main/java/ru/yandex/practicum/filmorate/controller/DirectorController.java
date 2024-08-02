@@ -1,50 +1,53 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import ru.yandex.practicum.filmorate.dto.DirectorDto;
-import ru.yandex.practicum.filmorate.mapper.DirectorMapper;
-import ru.yandex.practicum.filmorate.service.DirectorService;
-
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.service.directors.DirectorService;
+import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/directors")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
+@RequestMapping(ApiPathConstants.DIRECTORS_PATH)
+@Slf4j
 public class DirectorController {
-	private final DirectorService directorService;
+	private final DirectorService service;
 
 	@GetMapping
-	public ResponseEntity<List<DirectorDto>> getDirectors() {
-		return ResponseEntity.status(HttpStatus.OK).body(directorService.getDirectorList().stream()
-				.map(DirectorMapper.mapper::mapToDirectorDto).collect(Collectors.toList()));
+	public List<Director> getAll() {
+		log.info("Был запрошен список всех режиссёров");
+		return service.getAll();
 	}
 
-	@GetMapping("{id}")
-	public ResponseEntity<DirectorDto> getDirector(@PathVariable("id") Integer directorId) {
-		return ResponseEntity.ok(DirectorMapper.mapper.mapToDirectorDto(directorService.getDirector(directorId)));
+	@GetMapping(ApiPathConstants.BY_ID_PATH)
+	public Director getById(@PathVariable int id) {
+		log.info("Был запрошен режиссёр c id {}", id);
+		return service.getById(id);
 	}
 
 	@PostMapping
-	public ResponseEntity<DirectorDto> addDirector(@Valid @RequestBody DirectorDto director) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(DirectorMapper.mapper
-				.mapToDirectorDto(directorService.addDirector(DirectorMapper.mapper.mapToDirector(director))));
+	@ResponseStatus(HttpStatus.CREATED)
+	public Director add(@Valid @RequestBody Director director) {
+		log.info("Запрошено добавление режиссёра {}", director);
+		return service.add(director);
 	}
 
 	@PutMapping
-	public ResponseEntity<DirectorDto> updateDirector(@Valid @RequestBody DirectorDto director) {
-		return ResponseEntity.status(HttpStatus.OK).body(DirectorMapper.mapper
-				.mapToDirectorDto(directorService.updateDirector(DirectorMapper.mapper.mapToDirector(director))));
+	public Director update(@Valid @RequestBody Director director) {
+		log.info("Запрошено обновление режиссёра {}", director);
+		return service.update(director);
 	}
 
-	@DeleteMapping("{id}")
-	public void deleteDirector(@PathVariable("id") Integer directorId) {
-		directorService.delete(directorId);
+	@DeleteMapping(ApiPathConstants.BY_ID_PATH)
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(@PathVariable int id) {
+		log.info("Запрошено удаление режиссёра с id {}", id);
+		service.delete(id);
 	}
 }

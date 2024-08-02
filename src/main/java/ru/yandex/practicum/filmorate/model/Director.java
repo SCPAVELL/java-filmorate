@@ -1,25 +1,17 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import jakarta.validation.constraints.NotBlank;
-
-@Data
-@AllArgsConstructor
-@Builder
+@Getter
+@Setter
+@Builder(toBuilder = true)
 public class Director {
-	private Integer id;
-	@NotBlank(message = "Имя не может быть пустым или null")
+	@NotNull
+	@Positive
+	private int id;
+
+	@NotBlank
 	private String name;
 
-	public Map<String, Object> toMap() {
-		Map<String, Object> values = new HashMap<>();
-		values.put("director_name", name);
-		return values;
-	}
 }

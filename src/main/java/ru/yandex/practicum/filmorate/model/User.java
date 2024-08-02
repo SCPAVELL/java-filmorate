@@ -1,35 +1,67 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.LocalDate;
-import java.util.*;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.*;
 
-@Data
-@Builder
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class User {
-	@EqualsAndHashCode.Exclude
-	private Integer id;
-	@Email(message = "некорректный email")
+	private Long id;
+	@Email
 	private String email;
-	@NotBlank(message = "Логин не может быть пустым или null")
+	@NotBlank
 	private String login;
 	private String name;
-	@Past(message = "Дата рождения не может быть в будущем")
+	@PastOrPresent
 	private LocalDate birthday;
-	private final Set<User> friends = new HashSet<>();
 
-	public Map<String, Object> toMap() {
-		Map<String, Object> values = new HashMap<>();
-		values.put("email", email);
-		values.put("login", login);
-		values.put("name", name);
-		values.put("birthday", birthday);
-		return values;
+	public static class Builder {
+		private Long id;
+		private String email;
+		private String login;
+		private String name;
+		private LocalDate birthday;
+
+		public Builder id(Long id) {
+			this.id = id;
+			return this;
+		}
+
+		public Builder email(String email) {
+			this.email = email;
+			return this;
+		}
+
+		public Builder login(String login) {
+			this.login = login;
+			return this;
+		}
+
+		public Builder name(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder birthday(LocalDate birthday) {
+			this.birthday = birthday;
+			return this;
+		}
+
+		public User build() {
+			User user = new User();
+			user.setId(this.id);
+			user.setEmail(this.email);
+			user.setLogin(this.login);
+			user.setName(this.name);
+			user.setBirthday(this.birthday);
+			return user;
+		}
 	}
-
 }

@@ -1,100 +1,85 @@
 package ru.yandex.practicum.filmorate.storage.director;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.stereotype.Repository;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.mapper.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.model.Director;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.PreparedStatement;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-@Repository
-@Slf4j
+@Component
+@RequiredArgsConstructor
 public class DirectorDbStorage implements DirectorStorage {
+	private final DirectorRowMapper mapper;
 	private final JdbcTemplate jdbcTemplate;
 
-	@Autowired
-	public DirectorDbStorage(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
+	private static final String SQL_GET_ALL = "select * from directors";
+	private static final String SQL_GET_BY_ID = "select * from directors where id = ?";
+	private static final String SQL_ADD = "insert into directors (name) values (?)";
+	private static final String SQL_UPDATE = "update directors set name = ? where id = ?";
+	private static final String SQL_DELETE = "delete from directors where id = ?";
+	private static final String SQL_GET_ALL_FILMS_DIRECTORS = "select * from directors as d "
+			+ "join films_directors as fd on fd.director_id = d.id " + "join films as f on f.id = fd.film_id "
+			+ "where f.id = ? " + "order by fd.director_id";
+
+	@Override
+	public List<Director> getAll() {
+		return jdbcTemplate.query(SQL_GET_ALL, mapper);
+	}
+
+	@Override
+	public Optional<Director> getById(int id) {
+		List<Director> directors = jdbcTemplate.query(SQL_GET_BY_ID, mapper, id);
+		if (directors.size() != 1) {
+			return Optional.empty();
+		}
+		return Optional.of(directors.get(0));
 	}
 
 	@Override
 	public Director add(Director director) {
-		if (dbContainsDirector(director)) {
-			log.warn("Такой режиссер уже есть");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Такой режиссер уже есть");
-		}
-		Integer directorId = addDirectorInfo(director);
-		director.setId(directorId);
-		log.info("Режиссер {} сохранен", director);
-		return getDirector(directorId);
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		jdbcTemplate.update(connection -> {
+			PreparedStatement ps = connection.prepareStatement(SQL_ADD, new String[] { "id" });
+			ps.setString(1, director.getName());
+			return ps;
+		}, keyHolder);
+		director.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
+		return director;
 	}
 
 	@Override
-	public void delete(Integer directorId) {
-		String sqlQuery = "DELETE FROM director WHERE director_id = ?";
-		if (jdbcTemplate.update(sqlQuery, directorId) == 0) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссера с id=" + directorId + " нет");
-		}
+	public Director update(Director director) {
+		jdbcTemplate.update(SQL_UPDATE, director.getName(), director.getId());
+		return director;
 	}
 
 	@Override
-	public void update(Director director) {
-		String sqlQuery = "UPDATE director " + "SET director_name = ? WHERE director_id = ?";
-		if (jdbcTemplate.update(sqlQuery, director.getName(), director.getId()) == 0) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссера с id=" + director.getId() + " нет");
-		}
+	public void delete(int id) {
+		jdbcTemplate.update("delete from films_directors where director_id = ?", id);
+		jdbcTemplate.update(SQL_DELETE, id);
 	}
 
 	@Override
-	public List<Director> getDirectorsList() {
-		String sqlQuery = "SELECT * FROM director";
-		return jdbcTemplate.query(sqlQuery, this::makeDirector);
+	public List<Director> getByIds(List<Integer> ids) {
+		List<Director> directors = new ArrayList<>();
+		ids.forEach(id -> {
+			Optional<Director> director = getById(id);
+			director.ifPresent(directors::add);
+		});
+		return directors.stream().distinct().collect(Collectors.toList());
 	}
 
 	@Override
-	public Director getDirector(Integer directorId) {
-		if (!dbContainsDirector(directorId)) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссера с id= " + directorId + " не существует");
-		}
-		String sqlQuery = "SELECT * FROM director WHERE director_id = ?";
-		return jdbcTemplate.queryForObject(sqlQuery, this::makeDirector, directorId);
-	}
-
-	private int addDirectorInfo(Director director) {
-		SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("director")
-				.usingGeneratedKeyColumns("director_id");
-		return simpleJdbcInsert.executeAndReturnKey(director.toMap()).intValue();
-	}
-
-	private Director makeDirector(ResultSet resultSet, int rowNum) throws SQLException {
-		return Director.builder().id(resultSet.getInt("director_id")).name(resultSet.getString("director_name"))
-				.build();
-	}
-
-	private boolean dbContainsDirector(Director director) {
-		String sqlQuery = "SELECT * FROM director WHERE director_name = ?";
-		try {
-			jdbcTemplate.queryForObject(sqlQuery, this::makeDirector, director.getName());
-			return true;
-		} catch (EmptyResultDataAccessException e) {
-			return false;
-		}
-	}
-
-	private boolean dbContainsDirector(Integer directorId) {
-		String sqlQuery = "SELECT * FROM director WHERE director_id = ?";
-		try {
-			jdbcTemplate.queryForObject(sqlQuery, this::makeDirector, directorId);
-			return true;
-		} catch (EmptyResultDataAccessException e) {
-			return false;
-		}
+	public List<Director> getAllFilmDirectors(Long filmId) {
+		return jdbcTemplate.query(SQL_GET_ALL_FILMS_DIRECTORS, mapper, filmId);
 	}
 }

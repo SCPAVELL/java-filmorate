@@ -1,40 +1,92 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
-
+import lombok.Getter;
+import lombok.Setter;
+import ru.yandex.practicum.filmorate.model.validation.ValidReleaseDate;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.validation.constraints.*;
 
-@Data
-@Builder
+@Getter
+@Setter
 public class Film {
-	@EqualsAndHashCode.Exclude
-	private Integer id;
-	@NotBlank(message = "Название не может быть пустым")
+	private Long id;
+	@NotNull(message = "Название фильма не существует")
+	@NotBlank(message = "Название фильма не может быть пустым")
 	private String name;
-	@Size(max = 200, message = "Максимальная длина описания 200 символов")
+	@Size(max = 200, message = "Размер описания не должен превышать 200 символов")
 	private String description;
+	@ValidReleaseDate
+	@NotNull(message = "Дата выхода не существует")
 	private LocalDate releaseDate;
-	@Positive(message = "Некорректная продолжительность фильма")
-	private Integer duration;
-	@EqualsAndHashCode.Exclude
-	private final Set<User> likes = new HashSet<>();
-	@EqualsAndHashCode.Exclude
-	private final Set<Genre> genres = new TreeSet<>();
-	@EqualsAndHashCode.Exclude
-	private final Set<Director> directors = new HashSet<>();
-	@NotNull
-	@EqualsAndHashCode.Exclude
-	private Mpa mpa;
+	@Positive(message = "Длительность фильма не может быть отрицательной")
+	private long duration;
+	private List<Genre> genres = new ArrayList<>();
+	private MpaRating mpa;
+	private List<Director> directors = new ArrayList<>();
 
-	public Map<String, Object> toMap() {
-		Map<String, Object> values = new HashMap<>();
-		values.put("name", name);
-		values.put("description", description);
-		values.put("release_date", releaseDate);
-		values.put("duration", duration);
-		values.put("mpa", mpa.getId());
-		return values;
+	public static class Builder {
+		private Long id;
+		private String name;
+		private String description;
+		private LocalDate releaseDate;
+		private long duration;
+		private List<Genre> genres;
+		private MpaRating mpa;
+		private List<Director> directors;
+
+		public Builder id(Long id) {
+			this.id = id;
+			return this;
+		}
+
+		public Builder name(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder description(String description) {
+			this.description = description;
+			return this;
+		}
+
+		public Builder releaseDate(LocalDate releaseDate) {
+			this.releaseDate = releaseDate;
+			return this;
+		}
+
+		public Builder duration(long duration) {
+			this.duration = duration;
+			return this;
+		}
+
+		public Builder genres(List<Genre> genres) {
+			this.genres = genres;
+			return this;
+		}
+
+		public Builder mpa(MpaRating mpa) {
+			this.mpa = mpa;
+			return this;
+		}
+
+		public Builder directors(List<Director> directors) {
+			this.directors = directors;
+			return this;
+		}
+
+		public Film build() {
+			Film film = new Film();
+			film.id = this.id;
+			film.name = this.name;
+			film.description = this.description;
+			film.releaseDate = this.releaseDate;
+			film.duration = this.duration;
+			film.genres = this.genres;
+			film.mpa = this.mpa;
+			film.directors = this.directors;
+			return film;
+		}
 	}
 }

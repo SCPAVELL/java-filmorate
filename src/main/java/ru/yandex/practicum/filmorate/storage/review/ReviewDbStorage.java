@@ -1,205 +1,129 @@
 package ru.yandex.practicum.filmorate.storage.review;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.model.*;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.Instant;
-import java.util.*;
+import ru.yandex.practicum.filmorate.converter.ReviewDO2ReviewConverter;
+import ru.yandex.practicum.filmorate.domain.ReviewDO;
+import ru.yandex.practicum.filmorate.mapper.ReviewRowMapper;
+import ru.yandex.practicum.filmorate.model.Review;
+
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewDbStorage implements ReviewStorage {
 
-	private final JdbcTemplate jdbcTemplate;
+	private static final String ADD_REVIEW = "INSERT INTO review (user_id, film_id, content, is_positive, useful) VALUES (?, ?, ?, ?, ?)";
+	private static final String UPDATE_REVIEW = "UPDATE review SET content=?, is_positive=? WHERE id=?";
+	private static final String DELETE_REVIEW = "DELETE FROM review WHERE id=?";
+	private static final String GET_REVIEW_BY_ID = "SELECT r.*, " + "COALESCE(l.like_count, 0) AS like_count, "
+			+ "COALESCE(d.dislike_count, 0) AS dislike_count " + "FROM review r " + "LEFT JOIN "
+			+ "(SELECT review_id, COUNT(DISTINCT user_id) AS like_count FROM likes GROUP BY review_id) l ON r.id = l.review_id\n"
+			+ "LEFT JOIN "
+			+ "(SELECT review_id, COUNT(DISTINCT user_id) AS dislike_count FROM dislikes GROUP BY review_id) d ON r.id = d.review_id\n"
+			+ "WHERE r.id = %s";
+	public static final String ADD_LIKE = "INSERT INTO likes (review_id, user_id) VALUES (?, ?)";
+	public static final String REMOVE_LIKE = "DELETE FROM likes WHERE review_id=? AND user_id=?";
+	public static final String ADD_DISLIKE = "INSERT INTO dislikes (review_id, user_id) VALUES (?, ?)";
+	public static final String REMOVE_DISLIKE = "DELETE FROM dislikes WHERE review_id=? AND user_id=?";
 
-	private final Date date = new Date();
+	private final JdbcTemplate jdbcTemplate;
+	private final ReviewRowMapper reviewRowMapper;
+	private final ReviewDO2ReviewConverter converter;
+	private final RequestCreator requestCreator;
 
 	@Override
 	public Review addReview(Review review) {
-		if (!dbContainsFilm(review.getFilmId())) {
-			String message = "Невозможно создать отзыв к фильму, которого не существует";
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
-		}
-		if (!dbContainsUser(review.getUserId())) {
-			String message = "Невозможно создать отзыв от пользователя, которого не существует";
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
-		}
-		SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName("reviews")
-				.usingGeneratedKeyColumns("review_id");
-		int reviewId = simpleJdbcInsert.executeAndReturnKey(review.toMap()).intValue();
-		review.setReviewId(reviewId);
-		addToFeedReviewCreate(review.getReviewId(), review.getUserId());
-		return review;
+
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+
+		jdbcTemplate.update(connection -> {
+			PreparedStatement ps = connection.prepareStatement(ADD_REVIEW, Statement.RETURN_GENERATED_KEYS);
+			ps.setLong(1, review.getUserId());
+			ps.setLong(2, review.getFilmId());
+			ps.setString(3, review.getContent());
+			ps.setBoolean(4, review.getIsPositive());
+			ps.setInt(5, review.getUseful());
+			return ps;
+		}, keyHolder);
+		Long generatedReviewId = (Long) keyHolder.getKey();
+
+		return getReviewFromStorage(generatedReviewId);
 	}
 
 	@Override
 	public Review updateReview(Review review) {
-		if (!dbContainsReview(review.getReviewId())) {
-			String message = "Ошибка запроса обновления отзыва." + " Невозможно обновить отзыв которого не существует.";
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
-		}
-		String sql = "UPDATE REVIEWS SET CONTENT = ?, IS_POSITIVE = ? WHERE REVIEW_ID = ?";
-		jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), review.getReviewId());
-		review = getReviewById(review.getReviewId());
-		addToFeedReviewUpdate(review.getReviewId());
-		return review;
+
+		jdbcTemplate.update(UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
+
+		return getReviewFromStorage(review.getReviewId());
+
 	}
 
 	@Override
-	public void deleteReview(Integer reviewId) {
-		if (!dbContainsReview(reviewId)) {
-			String message = "Ошибка запроса удаления отзыва." + " Невозможно удалить отзыв которого не существует.";
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
-		}
-		Integer userId = getReviewById(reviewId).getUserId();
-		String sql = "DELETE FROM REVIEWS WHERE REVIEW_ID = ?";
-		jdbcTemplate.update(sql, reviewId);
-		addToFeedReviewDelete(reviewId, userId);
+	public void deleteReview(int reviewId) {
+		jdbcTemplate.update(DELETE_REVIEW, reviewId);
 	}
 
 	@Override
-	public Review getReviewById(Integer reviewId) {
-		if (!dbContainsReview(reviewId)) {
-			String message = "Ошибка запроса отзыва." + " Невозможно запросить отзыв которого не существует.";
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
-		}
-		String sql = "SELECT R.REVIEW_ID, R.CONTENT, R.IS_POSITIVE, R.PERSON_ID, R.FILM_ID, "
-				+ "(SUM(CASE WHEN RL.IS_POSITIVE = TRUE THEN 1 ELSE 0 END) - "
-				+ "SUM(CASE WHEN RL.IS_POSITIVE = FALSE THEN 1 ELSE 0 END)) AS USEFUL " + "FROM REVIEWS AS R "
-				+ "LEFT JOIN REVIEW_LIKES AS RL ON R.REVIEW_ID = RL.REVIEW_ID " + "WHERE R.REVIEW_ID = ? "
-				+ "GROUP BY R.REVIEW_ID";
-		return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeReview(rs), reviewId);
-	}
-
-	@Override
-	public List<Review> getReviewsForFilm(Integer filmId, Integer count) {
-		if (!dbContainsFilm(filmId)) {
-			String message = "Ошибка запроса фильма." + " Невозможно запросить фильм которого не существует.";
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
-		}
-		String sql = "SELECT R.REVIEW_ID, R.CONTENT, R.IS_POSITIVE, R.PERSON_ID, R.FILM_ID, "
-				+ "(SUM(CASE WHEN RL.IS_POSITIVE = TRUE THEN 1 ELSE 0 END) - "
-				+ "SUM(CASE WHEN RL.IS_POSITIVE = FALSE THEN 1 ELSE 0 END)) AS USEFUL " + "FROM REVIEWS AS R "
-				+ "LEFT JOIN REVIEW_LIKES AS RL ON R.REVIEW_ID = RL.REVIEW_ID " + "WHERE R.FILM_ID = ? "
-				+ "GROUP BY R.REVIEW_ID " + "ORDER BY USEFUL DESC " + "LIMIT ?";
-		return jdbcTemplate.query(sql, (rs, rowNum) -> makeReview(rs), filmId, count);
-	}
-
-	@Override
-	public List<Review> getAllReviewsWithLimit(Integer count) {
-		String sql = "SELECT R.REVIEW_ID, R.CONTENT, R.IS_POSITIVE, R.PERSON_ID, R.FILM_ID, "
-				+ "(SUM(CASE WHEN RL.IS_POSITIVE = TRUE THEN 1 ELSE 0 END) - "
-				+ "SUM(CASE WHEN RL.IS_POSITIVE = FALSE THEN 1 ELSE 0 END)) AS USEFUL " + "FROM REVIEWS AS R "
-				+ "LEFT JOIN REVIEW_LIKES AS RL ON R.REVIEW_ID = RL.REVIEW_ID " + "GROUP BY R.REVIEW_ID "
-				+ "ORDER BY USEFUL DESC " + "LIMIT ?";
-		return jdbcTemplate.query(sql, (rs, rowNum) -> makeReview(rs), count);
-	}
-
-	private boolean dbContainsReview(Integer reviewId) {
-		String sql = "SELECT R.REVIEW_ID, R.CONTENT, R.IS_POSITIVE, R.PERSON_ID, R.FILM_ID, "
-				+ "(SUM(CASE WHEN RL.IS_POSITIVE = TRUE THEN 1 ELSE 0 END) - "
-				+ "SUM(CASE WHEN RL.IS_POSITIVE = FALSE THEN 1 ELSE 0 END)) AS USEFUL " + "FROM REVIEWS AS R "
-				+ "LEFT JOIN REVIEW_LIKES AS RL ON R.REVIEW_ID = RL.REVIEW_ID " + "WHERE R.REVIEW_ID = ? "
-				+ "GROUP BY R.REVIEW_ID";
+	public Optional<Review> getReviewById(Long id) {
+		String formattedSqlRequest = String.format(GET_REVIEW_BY_ID, id);
 		try {
-			jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeReview(rs), reviewId);
-			return true;
-		} catch (EmptyResultDataAccessException e) {
-			return false;
+			ReviewDO reviewDO = jdbcTemplate.queryForObject(formattedSqlRequest, reviewRowMapper);
+			if (reviewDO != null) {
+				return Optional.of(converter.convert(reviewDO));
+			}
+		} catch (DataRetrievalFailureException exc) {
+			log.warn("No object found by id={}", id, exc);
 		}
+		return Optional.empty();
 	}
 
-	private boolean dbContainsFilm(Integer filmId) {
-		String sqlQuery = "SELECT f.*, mpa.mpa_name FROM FILM AS f JOIN mpa ON f.mpa = mpa.mpa_id "
-				+ "WHERE f.film_id = ?";
-		try {
-			jdbcTemplate.queryForObject(sqlQuery, this::makeFilm, filmId);
-			return true;
-		} catch (EmptyResultDataAccessException e) {
-			return false;
+	@Override
+	public Collection<Review> getReviews(@Nullable Integer filmId, @Nullable Integer limit) {
+		SqlRowSet rowSet = jdbcTemplate.queryForRowSet(requestCreator.createRequest(filmId, limit));
+		Collection<ReviewDO> reviews = new ArrayList<>();
+		while (rowSet.next()) {
+			ReviewDO reviewDO = reviewRowMapper.mapRowSet(rowSet);
+			reviews.add(reviewDO);
 		}
+		return reviews.stream().map(converter::convert).sorted(Comparator.comparing(Review::getUseful).reversed())
+				.collect(Collectors.toList());
 	}
 
-	private boolean dbContainsUser(Integer userId) {
-		String sqlQuery = "SELECT * FROM person WHERE person_id = ?";
-		try {
-			jdbcTemplate.queryForObject(sqlQuery, this::makeUser, userId);
-			return true;
-		} catch (EmptyResultDataAccessException e) {
-			return false;
-		}
+	@Override
+	public void addLikeToReview(Long reviewId, Integer userId) {
+		jdbcTemplate.update(ADD_LIKE, reviewId, userId);
+		jdbcTemplate.update(REMOVE_DISLIKE, reviewId, userId);
 	}
 
-	private Review makeReview(ResultSet rs) throws SQLException {
-		int id = rs.getInt("review_id");
-		String content = rs.getString("content");
-		boolean isPositive = rs.getBoolean("is_positive");
-		Integer userId = rs.getInt("person_id");
-		Integer filmId = rs.getInt("film_id");
-		Integer useful = rs.getInt("useful");
-		return new Review(id, content, isPositive, userId, filmId, useful);
+	@Override
+	public void addDislikeToReview(Long reviewId, Integer userId) {
+		jdbcTemplate.update(ADD_DISLIKE, reviewId, userId);
+		jdbcTemplate.update(REMOVE_LIKE, reviewId, userId);
 	}
 
-	private Film makeFilm(ResultSet resultSet, int rowSum) throws SQLException {
-		Film film = Film.builder().id(resultSet.getInt("film_id")).name(resultSet.getString("name"))
-				.description(resultSet.getString("description"))
-				.releaseDate(resultSet.getDate("release_date").toLocalDate()).duration(resultSet.getInt("duration"))
-				.mpa(new Mpa(resultSet.getInt("mpa"), resultSet.getString("mpa_name"))).build();
-		String sqlQuery = "SELECT person.* FROM likes JOIN person ON likes.person_id=person.person_id WHERE likes.film_id=?";
-		film.getLikes().addAll(jdbcTemplate.query(sqlQuery, this::makeUser, film.getId()));
-		film.getGenres().addAll(findGenresByFilmId(film.getId()));
-		film.getDirectors().addAll(findDirectorsByFilmId(film.getId()));
-		return film;
+	@Override
+	public void removeLike(Integer reviewId, Integer userId) {
+		jdbcTemplate.update(REMOVE_LIKE, reviewId, userId);
 	}
 
-	private Set<Director> findDirectorsByFilmId(Integer id) {
-		String sqlQuery = "SELECT d.director_id, d.director_name FROM film AS f JOIN director_films AS df "
-				+ "ON f.film_id=df.film_id JOIN director AS d ON df.director_id=d.director_id WHERE f.film_id = ?";
-		return new HashSet<>(jdbcTemplate.query(sqlQuery, this::makeDirector, id));
-	}
-
-	private Set<Genre> findGenresByFilmId(Integer id) {
-		String sqlQuery = "SELECT g.genre_id, g.genre_name FROM film AS f JOIN genre_films AS gf "
-				+ "ON f.film_id=gf.film_id JOIN genre AS g ON gf.genre_id=g.genre_id WHERE f.film_id = ?";
-		return new TreeSet<>(jdbcTemplate.query(sqlQuery, this::makeGenre, id));
-	}
-
-	private Genre makeGenre(ResultSet resultSet, int rowSum) throws SQLException {
-		return new Genre(resultSet.getInt("genre_id"), resultSet.getString("genre_name"));
-	}
-
-	private Director makeDirector(ResultSet resultSet, int rowSum) throws SQLException {
-		return new Director(resultSet.getInt("director_id"), resultSet.getString("director_name"));
-	}
-
-	private User makeUser(ResultSet resultSet, int rowNum) throws SQLException {
-		return User.builder().id(resultSet.getInt("person_id")).email(resultSet.getString("email"))
-				.login(resultSet.getString("login")).name(resultSet.getString("name"))
-				.birthday(resultSet.getDate("birthday").toLocalDate()).build();
-	}
-
-	private void addToFeedReviewUpdate(Integer reviewId) {
-		String sqlQuery = "INSERT INTO feed (person_id, event_type, operation,entity_id,time_stamp) "
-				+ "VALUES (?, 'REVIEW', 'UPDATE', ?,?)";
-		jdbcTemplate.update(sqlQuery, getReviewById(reviewId).getUserId(), reviewId, Date.from(Instant.now()));
-	}
-
-	private void addToFeedReviewCreate(Integer reviewId, Integer userId) {
-		String sql = "INSERT INTO feed (person_id, event_type, operation,entity_id,time_stamp) "
-				+ "VALUES (?, 'REVIEW', 'ADD', ?,?)";
-		jdbcTemplate.update(sql, userId, reviewId, Date.from(Instant.now()));
-	}
-
-	private void addToFeedReviewDelete(Integer reviewId, Integer userId) {
-		String sqlQuery = "INSERT INTO feed (person_id, event_type, operation,entity_id,time_stamp)"
-				+ " VALUES (?, 'REVIEW', 'REMOVE', ?,?)";
-		jdbcTemplate.update(sqlQuery, userId, reviewId, Date.from(Instant.now()));
+	@Override
+	public void removeDislike(Integer reviewId, Integer userId) {
+		jdbcTemplate.update(REMOVE_DISLIKE, reviewId, userId);
 	}
 }

@@ -1,86 +1,79 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
-import ru.yandex.practicum.filmorate.enums.Search;
-import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.service.FilmService;
-import java.util.*;
-import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.films.FilmService;
+import java.util.List;
+import java.util.Optional;
+
+@Slf4j
+@RequiredArgsConstructor
+@RequestMapping(ApiPathConstants.FILM_PATH)
 @RestController
-@RequestMapping("/films")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@Validated
 public class FilmController {
-	private final FilmService filmService;
+	private final FilmService service;
+
+	@GetMapping
+	public List<Film> get() {
+		log.info("Был запрошен список всех фильмов.");
+		return service.get();
+	}
+
+	@GetMapping(ApiPathConstants.BY_ID_PATH)
+	public Film getFilmById(@PathVariable Long id) {
+		log.info("Был запрошен фильм с id " + id);
+		System.out.println(service.getById(id));
+		return service.getById(id);
+	}
+
+	@GetMapping(ApiPathConstants.SEARCH_FILMS_PATH)
+	public List<Film> search(@RequestParam String query, @RequestParam(name = "by") List<String> filters) {
+		log.info("Был запрошен поиск фильмов");
+		return service.search(query, filters);
+	}
 
 	@PostMapping
-	public ResponseEntity<FilmDto> addFilm(@Valid @RequestBody FilmDto film) {
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(FilmMapper.mapToFilmDto(filmService.addFilm(FilmMapper.mapToFilm(film))));
+	public Film add(@Valid @RequestBody Film film) {
+		log.info("Запрошено добавление фильма " + film.getName());
+		return service.add(film);
 	}
 
 	@PutMapping
-	public ResponseEntity<FilmDto> updateFilm(@Valid @RequestBody FilmDto film) {
-		return ResponseEntity.status(HttpStatus.OK)
-				.body(FilmMapper.mapToFilmDto(filmService.updateFilm(FilmMapper.mapToFilm(film))));
+	public Film update(@Valid @RequestBody Film film) {
+		log.info("Запрошено обновление фильма " + film.getId());
+		return service.update(film);
 	}
 
-	@GetMapping
-	public ResponseEntity<List<FilmDto>> getFilms() {
-		return ResponseEntity.status(HttpStatus.OK)
-				.body(filmService.getFilms().stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList()));
+	@DeleteMapping(ApiPathConstants.BY_ID_PATH)
+	public void deleteFilmById(@PathVariable @Positive Long id) {
+		log.info("Было запрошено удаление фильма с id " + id);
+		service.delete(id);
 	}
 
-	@PutMapping("{id}/like/{userId}")
-	public void addLike(@PathVariable Integer userId, @PathVariable("id") Integer filmId) {
-		filmService.addLike(userId, filmId);
+	@GetMapping(ApiPathConstants.FILM_BY_DIRECTOR_PATH)
+	public List<Film> getDirectorsFilmSortedByLikes(@PathVariable int directorId, @RequestParam String sortBy) {
+		return service.getDirectorFilms(directorId, sortBy);
 	}
 
-	@GetMapping("{id}")
-	public ResponseEntity<FilmDto> getFilm(@PathVariable("id") Integer filmId) {
-		return ResponseEntity.status(HttpStatus.OK).body(FilmMapper.mapToFilmDto(filmService.getFilm(filmId)));
+	@GetMapping(ApiPathConstants.POPULAR_FILMS_PATH)
+	public List<Film> getMostPopularFilms(@RequestParam(name = "count", required = false) String count,
+			@RequestParam(name = "genreId", required = false) Integer genreId,
+			@RequestParam(name = "year", required = false) Integer year) {
+		Long countValue = Optional.ofNullable(count).map(Long::parseLong).orElse(10L);
+		return service.getMostPopularFilms(countValue, genreId, year);
 	}
 
-	@DeleteMapping("{id}/like/{userId}")
-	public void deleteLike(@PathVariable Integer userId, @PathVariable("id") Integer filmId) {
-		filmService.deleteLike(userId, filmId);
-	}
-
-	@GetMapping("popular")
-	public ResponseEntity<List<FilmDto>> getPopularFilms(@RequestParam(defaultValue = "10") Integer count,
-			@RequestParam(required = false) Integer genreId, @RequestParam(required = false) Integer year) {
-		return ResponseEntity.status(HttpStatus.OK).body(filmService.getTopFilms(count, genreId, year).stream()
-				.map(FilmMapper::mapToFilmDto).collect(Collectors.toList()));
-	}
-
-	@GetMapping("director/{directorId}")
-	public ResponseEntity<List<FilmDto>> getDirectorFilms(@PathVariable Integer directorId,
-			@RequestParam(defaultValue = "likes") String sortBy) {
-		return ResponseEntity.status(HttpStatus.OK).body(filmService.getSortedDirectorFilms(directorId, sortBy).stream()
-				.map(FilmMapper::mapToFilmDto).collect(Collectors.toList()));
-	}
-
-	@DeleteMapping("{id}")
-	public void deleteFilm(@PathVariable("id") Integer filmId) {
-		filmService.deleteFilm(filmId);
-	}
-
-	@GetMapping("common")
-	public ResponseEntity<List<FilmDto>> getCommonFilms(@RequestParam Integer userId, @RequestParam Integer friendId) {
-		return ResponseEntity.status(HttpStatus.OK).body(filmService.getCommonsFilms(userId, friendId).stream()
-				.map(FilmMapper::mapToFilmDto).collect(Collectors.toList()));
-	}
-
-	@GetMapping("/search")
-	public ResponseEntity<List<FilmDto>> searchFilms(@RequestParam(value = "query", required = false) String query,
-			@RequestParam(value = "by", required = false) Search by) {
-		return ResponseEntity.status(HttpStatus.OK).body(
-				filmService.searchFilms(query, by).stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList()));
+	@GetMapping(ApiPathConstants.COMMON_PATH)
+	public List<Film> getCommon(@RequestParam Long userId, @RequestParam Long friendId) {
+		log.info("Были запрошены общие фильмы пользователей {} и {}", userId, friendId);
+		return service.getCommon(userId, friendId);
 	}
 }

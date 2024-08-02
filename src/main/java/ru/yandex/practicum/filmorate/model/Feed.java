@@ -1,31 +1,15 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
+import lombok.Setter;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import java.util.Date;
-
-@Data
-@AllArgsConstructor
-@Builder
+@Getter
+@Setter
 public class Feed {
-	@NotNull
-	private int userId;
-
+	private Long eventId;
+	private Long userId;
+	private Long entityId;
+	private Long timestamp;
 	private String eventType;
-
 	private String operation;
-
-	@NotNull
-	private int eventId;
-
-	@NotNull
-	private int entityId;
-
-	@JsonFormat(shape = JsonFormat.Shape.NUMBER)
-	private Date timestamp;
-
 }

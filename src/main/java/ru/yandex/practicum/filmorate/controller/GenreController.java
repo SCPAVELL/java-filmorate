@@ -1,31 +1,34 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.dto.GenreDto;
-import ru.yandex.practicum.filmorate.mapper.GenreMapper;
-import ru.yandex.practicum.filmorate.service.GenreService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.service.genres.GenreService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
+@RequiredArgsConstructor
+@RequestMapping(ApiPathConstants.GENRE_PATH)
 @RestController
-@RequestMapping("/genres")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class GenreController {
-	private final GenreService genreService;
+	private final GenreService service;
 
 	@GetMapping
-	public ResponseEntity<List<GenreDto>> getFilms() {
-		return ResponseEntity.status(HttpStatus.OK).body(genreService.getGenreList().stream()
-				.map(GenreMapper.mapper::mapToGenreDto).collect(Collectors.toList()));
+	public List<Genre> getAllGenres() {
+		log.info("Запрошен список всех жанров");
+		return service.getAll();
 	}
 
-	@GetMapping("{id}")
-	public ResponseEntity<GenreDto> getFilm(@PathVariable("id") Integer id) {
-		return ResponseEntity.status(HttpStatus.OK).body(GenreMapper.mapper.mapToGenreDto(genreService.getGenre(id)));
+	@GetMapping(ApiPathConstants.BY_ID_PATH)
+	public Genre getTitleById(@PathVariable Integer id) {
+		log.info("Запрошено название жанра с ID {}!", id);
+		System.out.println();
+		return service.getById(id);
 	}
 }

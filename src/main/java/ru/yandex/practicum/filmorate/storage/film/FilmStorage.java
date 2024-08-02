@@ -1,35 +1,29 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.springframework.lang.Nullable;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface FilmStorage {
 	Film add(Film film);
 
 	Film update(Film film);
 
-	List<Film> getFilmsList();
+	void delete(Long id);
 
-	List<Film> getCommonFilms(Integer userId, Integer friendId);
+	List<Film> getAll();
 
-	void addLike(Integer userId, Integer filmId);
+	Optional<Film> getById(Long id);
 
-	void deleteLike(Integer userId, Integer filmId);
+	List<Film> search(String query, List<String> by);
 
-	Film getFilm(Integer id);
+	List<Film> getDirectorsFilmSortedByLikes(int directorId);
 
-	List<Film> getTopFilms(Integer count, Integer genreId, Integer year);
+	List<Film> getDirectorsFilmSortedByYears(int directorId);
 
-	List<Film> getSortedDirectorFilms(Integer directorId, String sortBy);
+	List<Film> getMostPopularFilms(Long count, @Nullable Integer genreId, @Nullable Integer year);
 
-	void delete(Integer filmId);
-
-	List<Film> getFilmByTitleDirector(String query);
-
-	List<Film> getFilmByDirector(String query);
-
-	List<Film> getFilmByTitle(String query);
-
-	List<Film> getLikedFilms();
+	List<Film> getCommon(Long userId, Long friendId);
 }
