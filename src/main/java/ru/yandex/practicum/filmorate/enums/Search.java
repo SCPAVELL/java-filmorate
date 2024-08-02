@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public enum Search {
+
 	title("title"), director("director"), titleAndDirector("title,director"), directorAndTitle("director,title");
 
 	private static Map<String, Search> elements;
@@ -12,6 +13,7 @@ public enum Search {
 	static {
 		elements = Arrays.stream(values()).collect(Collectors.toMap(e -> e.by, e -> e));
 	}
+
 	private String by;
 
 	Search(String by) {
