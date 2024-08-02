@@ -1,97 +1,88 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.service.UserService;
-import java.util.Collection;
+import jakarta.validation.Valid;
+import ru.yandex.practicum.filmorate.dto.FeedDto;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.mapper.FeedMapper;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.service.UserService;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
-@Slf4j
 @RequestMapping("/users")
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class UserController {
-
 	private final UserService userService;
 
-	public UserController(@Autowired(required = false) UserService userService) {
-		this.userService = userService;
-	}
-
-	@GetMapping
-	public Collection<User> findAll() {
-		log.info("Получен запрос GET к эндпоинту: /users");
-		return userService.getAllUsers();
-	}
-
-	@GetMapping("/{id}/friends")
-	public Collection<User> findFriends(@PathVariable String id) {
-		log.info("Получен запрос GET к эндпоинту: /users/{}/friends", id);
-		return userService.getFriends(id);
-	}
-
-	@GetMapping("/{id}")
-	public User findUser(@PathVariable String id) {
-		log.info("Получен запрос GET к эндпоинту: /users/{}/", id);
-		return userService.getUser(id);
-	}
-
-	@GetMapping("/{id}/friends/common/{otherId}")
-	public Collection<User> findCommonFriends(@PathVariable String id, @PathVariable String otherId) {
-		log.info("Получен запрос GET к эндпоинту: /users/{}/friends/common/{}", id, otherId);
-		return userService.getCommonFriends(id, otherId);
-	}
-
 	@PostMapping
-	public User create(@RequestBody User user) {
-		log.info("Получен запрос POST. Данные тела запроса: {}", user);
-		final User validUser = userService.add(user);
-		log.info("Создан объект {} с идентификатором {}", User.class.getSimpleName(), validUser.getId());
-		return validUser;
+	public ResponseEntity<UserDto> addUser(@Valid @RequestBody UserDto user) {
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(UserMapper.mapToUserDto(userService.addUser(UserMapper.mapToUser(user))));
 	}
 
 	@PutMapping
-	public User put(@RequestBody User user) {
-		log.info("Получен запрос PUT. Данные тела запроса: {}", user);
-		try {
-			final User validUser = userService.update(user);
-			log.info("Обновлен объект {} с идентификатором {}", User.class.getSimpleName(), validUser.getId());
-			return validUser;
-		} catch (ResponseStatusException e) {
-			log.error("Ошибка при обновлении пользователя: {}", e.getMessage());
-			throw e;
-		} catch (Exception e) {
-			log.error("Неизвестная ошибка при обновлении пользователя: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"Неизвестная ошибка при обновлении пользователя", e);
-		}
+	public ResponseEntity<UserDto> updateUser(@Valid @RequestBody UserDto user) {
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(UserMapper.mapToUserDto(userService.updateUser(UserMapper.mapToUser(user))));
 	}
 
-	@PutMapping("/{id}/friends/{friendId}")
-	public void addFriend(@PathVariable String id, @PathVariable String friendId) {
-		log.info("Получен запрос PUT к эндпоинту: /users/{}/friends/{}", id, friendId);
-		try {
-			userService.addFriend(id, friendId);
-			log.info("Обновлен объект {} с идентификатором {}. Добавлен друг {}", User.class.getSimpleName(), id,
-					friendId);
-		} catch (NotFoundException e) {
-			log.error("Ошибка при добавлении друга: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
-		} catch (Exception e) {
-			log.error("Неизвестная ошибка при добавлении друзей: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"Неизвестная ошибка при добавлении друзей", e);
-		}
+	@GetMapping
+	public ResponseEntity<List<UserDto>> getUsers() {
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(userService.getUsers().stream().map(UserMapper::mapToUserDto).collect(Collectors.toList()));
 	}
 
-	@DeleteMapping("/{id}/friends/{friendId}")
-	public void deleteFriend(@PathVariable String id, @PathVariable String friendId) {
-		log.info("Получен запрос DELETE к эндпоинту: /users/{}/friends/{}", id, friendId);
-		userService.deleteFriend(id, friendId);
-		log.info("Обновлен объект {} с идентификатором {}. Удален друг {}", User.class.getSimpleName(), id, friendId);
+	@GetMapping("{id}")
+	public ResponseEntity<UserDto> getUser(@PathVariable("id") Integer userId) {
+		return ResponseEntity.status(HttpStatus.OK).body(UserMapper.mapToUserDto(userService.getUser(userId)));
 	}
+
+	@PutMapping("{id}/friends/{friendId}")
+	public void addFriend(@PathVariable("id") Integer userId, @PathVariable Integer friendId) {
+		userService.addFriend(userId, friendId);
+	}
+
+	@DeleteMapping("{id}/friends/{friendId}")
+	public void deleteFriend(@PathVariable("id") Integer userId, @PathVariable Integer friendId) {
+		userService.deleteFriend(userId, friendId);
+	}
+
+	@GetMapping("{id}/friends")
+	public ResponseEntity<List<UserDto>> getUserFriends(@PathVariable("id") Integer userId) {
+		return ResponseEntity.status(HttpStatus.OK).body(
+				userService.getFriends(userId).stream().map(UserMapper::mapToUserDto).collect(Collectors.toList()));
+	}
+
+	@GetMapping("{id}/friends/common/{friendId}")
+	public ResponseEntity<List<UserDto>> getCommonFriends(@PathVariable("id") Integer userId,
+			@PathVariable Integer friendId) {
+		return ResponseEntity.status(HttpStatus.OK).body(userService.getCommonFriends(userId, friendId).stream()
+				.map(UserMapper::mapToUserDto).collect(Collectors.toList()));
+	}
+
+	@DeleteMapping("{id}")
+	public void deleteUser(@PathVariable("id") Integer userId) {
+		userService.delete(userId);
+	}
+
+	@GetMapping("{id}/recommendations")
+	public ResponseEntity<List<FilmDto>> getRecommendation(@PathVariable("id") Integer userId) {
+		return ResponseEntity.status(HttpStatus.OK).body(userService.getRecommendations(userId).stream()
+				.map(FilmMapper::mapToFilmDto).collect(Collectors.toList()));
+	}
+
+	@GetMapping("{id}/feed")
+	public ResponseEntity<List<FeedDto>> getUserFeed(@PathVariable("id") Integer userId) {
+		return ResponseEntity.status(HttpStatus.OK).body(userService.getUserFeed(userId).stream()
+				.map(FeedMapper.mapper::mapToFeedDto).collect(Collectors.toList()));
+	}
+
 }

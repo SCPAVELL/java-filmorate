@@ -1,26 +1,32 @@
-DELETE FROM LIKES;
-DELETE FROM GENRELINE;
-DELETE FROM FRIENDSHIP;
-DELETE FROM USERS;
-DELETE FROM FILM;
+INSERT INTO MPA (mpa_name) SELECT 'G'
+WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'G');
 
-ALTER TABLE USERS ALTER COLUMN USERID RESTART WITH 1;
-ALTER TABLE FILM ALTER COLUMN FILMID RESTART WITH 1;
-ALTER TABLE FRIENDSHIP ALTER COLUMN FRIENDSHIPID RESTART WITH 1;
-ALTER TABLE GENRELINE ALTER COLUMN GENRELINEID RESTART WITH 1;
-ALTER TABLE LIKES ALTER COLUMN LIKEID RESTART WITH 1;
+INSERT INTO MPA (mpa_name) SELECT 'PG'
+WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'PG');
 
-MERGE INTO RATINGMPA KEY(RATINGID)
-    VALUES (1, 'G', 'Нет возрастных ограничений'),
-           (2, 'PG', 'Рекомендуется присутствие родителей'),
-           (3, 'PG-13', 'Детям до 13 лет просмотр не желателен'),
-           (4, 'R', 'Лицам до 17 лет обязательно присутствие взрослого'),
-           (5, 'NC-17', 'Лицам до 18 лет просмотр запрещен');
+INSERT INTO MPA (mpa_name) SELECT 'PG-13'
+WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'PG-13');
 
-MERGE INTO GENRE KEY(GENREID)
-    VALUES (1, 'Комедия'),
-           (2, 'Драма'),
-           (3, 'Мультфильм'),
-           (4, 'Триллер'),
-           (5, 'Документальный'),
-           (6, 'Боевик');
+INSERT INTO MPA (mpa_name) SELECT 'R'
+WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'R');
+
+INSERT INTO MPA (mpa_name) SELECT 'NC-17'
+WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'NC-17');
+
+INSERT INTO GENRE (genre_name) SELECT 'Комедия'
+WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Комедия');
+
+INSERT INTO GENRE (genre_name) SELECT 'Драма'
+WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Драма');
+
+INSERT INTO GENRE (genre_name) SELECT 'Мультфильм'
+WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Мультфильм');
+
+INSERT INTO GENRE (genre_name) SELECT 'Триллер'
+WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Триллер');
+
+INSERT INTO GENRE (genre_name) SELECT 'Документальный'
+WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Документальный');
+
+INSERT INTO GENRE (genre_name) SELECT 'Боевик'
+WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Боевик');

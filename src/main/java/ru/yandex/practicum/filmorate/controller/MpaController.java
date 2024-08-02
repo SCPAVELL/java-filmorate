@@ -1,45 +1,32 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.MpaDto;
+import ru.yandex.practicum.filmorate.mapper.MpaMapper;
+import ru.yandex.practicum.filmorate.service.MpaService;
 
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.service.MpaService;
-
-import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
-@Slf4j
 @RequestMapping("/mpa")
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class MpaController {
 	private final MpaService mpaService;
 
-	@Autowired(required = false)
-	public MpaController(MpaService mpaService) {
-		this.mpaService = mpaService;
-	}
-
 	@GetMapping
-	public Collection<Mpa> findAll() {
-		log.info("Получен запрос GET к эндпоинту: /mpa");
-		return mpaService.getAllMpa();
+	@ResponseStatus(HttpStatus.OK)
+	public ResponseEntity<List<MpaDto>> getMpasList() {
+		return ResponseEntity.status(HttpStatus.OK).body(
+				mpaService.getMpasList().stream().map(MpaMapper.mapper::mapToMpaDto).collect(Collectors.toList()));
 	}
 
-	@GetMapping("/{id}")
-	public Mpa findGenre(@PathVariable String id) {
-		log.info("Получен запрос GET к эндпоинту: /mpa/{}", id);
-		try {
-			return mpaService.getMpa(id);
-		} catch (NotFoundException e) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-		}
+	@GetMapping("{id}")
+	public ResponseEntity<MpaDto> getMpa(@PathVariable("id") Integer id) {
+		return ResponseEntity.status(HttpStatus.OK).body(MpaMapper.mapper.mapToMpaDto(mpaService.getMpa(id)));
 	}
 }
