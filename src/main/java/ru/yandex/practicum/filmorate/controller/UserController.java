@@ -1,58 +1,80 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
-import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
+import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.users.UserService;
-import java.util.List;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-@Slf4j
-@RequiredArgsConstructor
-@RequestMapping(ApiPathConstants.USER_PATH)
-@RestController
+import java.util.Collection;
+
 @Validated
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/users")
 public class UserController {
-	private final UserService service;
+	private final UserService userService;
+
+	private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
 	@GetMapping
-	public List<User> getUsers() {
-		log.info("Были запрошены все пользователи!");
-		return service.getUsers();
+	public Collection<UserDto> getUsers() {
+		return userService.getUsers();
 	}
 
-	@GetMapping(ApiPathConstants.BY_ID_PATH)
-	public User getUserById(@PathVariable Long id) {
-		log.info("Был запрошен пользователь с ID");
-		return service.getUserById(id);
+	@GetMapping("/{id}")
+	public User getUser(@PathVariable("id") Long userId) {
+		return userService.getUser(userId);
+	}
+
+	@GetMapping("/{id}/friends")
+	public Collection<UserDto> getFriends(@PathVariable("id") Long userId) {
+		return userService.getFriends(userId);
+	}
+
+	@GetMapping("/{id}/friends/common/{otherId}")
+	public Collection<UserDto> getMutualFriends(@PathVariable("id") Long userId, @PathVariable("otherId") Long otherId) {
+		return userService.getMutualFriends(userId, otherId);
 	}
 
 	@PostMapping
-	public User addUser(@Valid @RequestBody User user) {
-		log.info("Создан пользователь " + user.getName());
-		return service.addUser(user);
+	public UserDto addUser(@Valid @RequestBody User user) {
+		return userService.addUser(user);
 	}
 
 	@PutMapping
-	public User updateUser(@Valid @RequestBody User user) {
-		return service.updateUser(user);
+	public UserDto changeUser(@Valid @RequestBody User user) {
+		return userService.changeUser(user);
 	}
 
-	@DeleteMapping(ApiPathConstants.BY_ID_PATH)
-	public void deleteUserById(@PathVariable @Positive Long id) {
-		log.info("Было запрошено удаление пользователя с id " + id);
-		service.delete(id);
+	@GetMapping("/{id}/recommendations")
+	public Collection<Film> getRecommendations(@PathVariable("id") Long userId) {
+		return userService.getRecommendationFilms(userId);
 	}
 
-	@GetMapping(ApiPathConstants.RECOMMENDATIONS_PATH)
-	public List<Film> getRecommendations(@PathVariable Long id) {
-		log.info("Запрошены рекомендации для пользователя {}", id);
-		return service.getRecommendations(id);
+	@PutMapping("/{id}/friends/{friendId}")
+	public void addFriend(@PathVariable("id") Long userId, @PathVariable("friendId") Long friendId) {
+		userService.addFriend(userId, friendId);
+	}
+
+	@DeleteMapping("/{id}/friends/{friendId}")
+	public void deleteFriend(@PathVariable("id") Long userId, @PathVariable("friendId") Long friendId) {
+		userService.deleteFriend(userId, friendId);
+	}
+
+	@DeleteMapping("/{id}")
+	public void deleteUser(@PathVariable("id") Long userId) {
+		userService.deleteUser(userId);
+	}
+
+	@GetMapping("/{id}/feed")
+	public Collection<Event> getEvents(@PathVariable("id") Long userId) {
+		return userService.getEventsByUserId(userId);
 	}
 }

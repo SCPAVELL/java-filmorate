@@ -1,24 +1,13 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@Builder(toBuilder = true)
+@Data
 public class Review {
-
-	@Positive
 	private Long reviewId;
-	@NotNull
-	private Long userId;
-	@NotNull
-	private Long filmId;
-	@NotBlank
 	private String content;
-	@NotNull
 	private Boolean isPositive;
+	private Long userId;
+	private Long filmId;
 	private int useful;
 }

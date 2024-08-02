@@ -2,19 +2,24 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Collection;
 
 public interface UserStorage {
-	User add(User user);
+	User getUser(Long userId);
 
-	User update(User user);
+	Collection<User> getUsers();
 
-	void delete(Long id);
+	Collection<User> getFriends(Long id);
 
-	List<User> getAll();
+	Collection<User> getMutualFriends(Long id, Long otherId);
 
-	Optional<User> getById(Long id);
+	User addUser(User user);
 
-	List<Long> getRecommendations(Long id);
+	void deleteUser(Long id);
+
+	User changeUser(User user);
+
+	void addFriend(Long userId, Long friendId);
+
+	void deleteFriend(Long userId, Long friendId);
 }

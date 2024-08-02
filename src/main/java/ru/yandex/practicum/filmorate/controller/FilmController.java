@@ -1,79 +1,74 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
-import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.films.FilmService;
-import java.util.List;
-import java.util.Optional;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-@Slf4j
-@RequiredArgsConstructor
-@RequestMapping(ApiPathConstants.FILM_PATH)
+import java.util.Collection;
+
 @RestController
-@Validated
+@RequiredArgsConstructor
+@RequestMapping("/films")
 public class FilmController {
-	private final FilmService service;
+	private final FilmService filmService;
+
+	@GetMapping("/{id}")
+	public Film getFilm(@PathVariable("id") Long id) {
+		return filmService.getFilm(id);
+	}
 
 	@GetMapping
-	public List<Film> get() {
-		log.info("Был запрошен список всех фильмов.");
-		return service.get();
-	}
-
-	@GetMapping(ApiPathConstants.BY_ID_PATH)
-	public Film getFilmById(@PathVariable Long id) {
-		log.info("Был запрошен фильм с id " + id);
-		System.out.println(service.getById(id));
-		return service.getById(id);
-	}
-
-	@GetMapping(ApiPathConstants.SEARCH_FILMS_PATH)
-	public List<Film> search(@RequestParam String query, @RequestParam(name = "by") List<String> filters) {
-		log.info("Был запрошен поиск фильмов");
-		return service.search(query, filters);
+	public Collection<Film> getFilms() {
+		return filmService.getFilms();
 	}
 
 	@PostMapping
-	public Film add(@Valid @RequestBody Film film) {
-		log.info("Запрошено добавление фильма " + film.getName());
-		return service.add(film);
+	public Film create(@RequestBody Film film) {
+		return filmService.addFilm(film);
 	}
 
 	@PutMapping
-	public Film update(@Valid @RequestBody Film film) {
-		log.info("Запрошено обновление фильма " + film.getId());
-		return service.update(film);
+	public Film update(@RequestBody Film newFilm) {
+		return filmService.changeFilm(newFilm);
 	}
 
-	@DeleteMapping(ApiPathConstants.BY_ID_PATH)
-	public void deleteFilmById(@PathVariable @Positive Long id) {
-		log.info("Было запрошено удаление фильма с id " + id);
-		service.delete(id);
+	@PutMapping("/{id}/like/{userId}")
+	public void addLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
+		filmService.addLike(filmId, userId);
 	}
 
-	@GetMapping(ApiPathConstants.FILM_BY_DIRECTOR_PATH)
-	public List<Film> getDirectorsFilmSortedByLikes(@PathVariable int directorId, @RequestParam String sortBy) {
-		return service.getDirectorFilms(directorId, sortBy);
+	@DeleteMapping("/{id}/like/{userId}")
+	public void deleteLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
+		filmService.deleteLike(filmId, userId);
 	}
 
-	@GetMapping(ApiPathConstants.POPULAR_FILMS_PATH)
-	public List<Film> getMostPopularFilms(@RequestParam(name = "count", required = false) String count,
-			@RequestParam(name = "genreId", required = false) Integer genreId,
-			@RequestParam(name = "year", required = false) Integer year) {
-		Long countValue = Optional.ofNullable(count).map(Long::parseLong).orElse(10L);
-		return service.getMostPopularFilms(countValue, genreId, year);
+	// GET /films/popular?count={limit}&genreId={genreId}&year={year}
+	@GetMapping("/popular")
+	public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count,
+			@RequestParam(required = false) Integer genreId, @RequestParam(required = false) Integer year) {
+		return filmService.getPopularByYear(count, genreId, year);
 	}
 
-	@GetMapping(ApiPathConstants.COMMON_PATH)
-	public List<Film> getCommon(@RequestParam Long userId, @RequestParam Long friendId) {
-		log.info("Были запрошены общие фильмы пользователей {} и {}", userId, friendId);
-		return service.getCommon(userId, friendId);
+	@DeleteMapping({ "/{id}" })
+	public void deleteFilm(@PathVariable("id") Long filmId) {
+		filmService.deleteFilm(filmId);
+	}
+
+	@GetMapping("/common")
+	public Collection<Film> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
+		return filmService.getCommonFilms(userId, friendId);
+	}
+
+	@GetMapping("/director/{directorId}")
+	public Collection<Film> getSortedDirectorsFilms(@PathVariable("directorId") Long directorId,
+			@RequestParam String sortBy) {
+		return filmService.getSortedDirectorsFilms(directorId, sortBy);
+	}
+
+	@GetMapping("/search")
+	public Collection<Film> search(@RequestParam(defaultValue = "") String query,
+			@RequestParam(defaultValue = "title") String by) {
+		return filmService.search(query, by);
 	}
 }

@@ -1,53 +1,40 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.service.directors.DirectorService;
-import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
-import java.util.List;
+import ru.yandex.practicum.filmorate.service.DirectorService;
+
+import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(ApiPathConstants.DIRECTORS_PATH)
-@Slf4j
+@RequestMapping("/directors")
 public class DirectorController {
-	private final DirectorService service;
+	private final DirectorService directorService;
 
-	@GetMapping
-	public List<Director> getAll() {
-		log.info("Был запрошен список всех режиссёров");
-		return service.getAll();
+	@GetMapping("/{id}")
+	public Director getDirector(@PathVariable Long id) {
+		return directorService.getDirector(id);
 	}
 
-	@GetMapping(ApiPathConstants.BY_ID_PATH)
-	public Director getById(@PathVariable int id) {
-		log.info("Был запрошен режиссёр c id {}", id);
-		return service.getById(id);
+	@GetMapping
+	public Collection<Director> getDirectors() {
+		return directorService.getDirectors();
 	}
 
 	@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	public Director add(@Valid @RequestBody Director director) {
-		log.info("Запрошено добавление режиссёра {}", director);
-		return service.add(director);
+	public Director addDirector(@RequestBody Director director) {
+		return directorService.addDirector(director);
 	}
 
 	@PutMapping
-	public Director update(@Valid @RequestBody Director director) {
-		log.info("Запрошено обновление режиссёра {}", director);
-		return service.update(director);
+	public Director updateDirector(@RequestBody Director director) {
+		return directorService.changeDirector(director);
 	}
 
-	@DeleteMapping(ApiPathConstants.BY_ID_PATH)
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable int id) {
-		log.info("Запрошено удаление режиссёра с id {}", id);
-		service.delete(id);
+	@DeleteMapping("/{id}")
+	public void deleteDirector(@PathVariable Long id) {
+		directorService.deleteDirector(id);
 	}
 }

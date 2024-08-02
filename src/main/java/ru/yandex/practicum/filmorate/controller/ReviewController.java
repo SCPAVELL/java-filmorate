@@ -1,76 +1,61 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
-import ru.yandex.practicum.filmorate.controller.utils.ApiPathConstants;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.service.reviews.ReviewService;
+import ru.yandex.practicum.filmorate.service.ReviewService;
+
 import java.util.Collection;
 
 @RestController
-@RequestMapping(ApiPathConstants.REVIEW_PATH)
 @RequiredArgsConstructor
+@RequestMapping("/reviews")
 public class ReviewController {
-
 	private final ReviewService reviewService;
 
+	@GetMapping("/{id}")
+	public Review getReview(@PathVariable("id") Long id) {
+		return reviewService.getReview(id);
+	}
+
+	@GetMapping
+	public Collection<Review> getReviews(@RequestParam(required = false) Long filmId,
+			@RequestParam(defaultValue = "10") int count) {
+		return reviewService.getReviews(filmId, count);
+	}
+
 	@PostMapping
-	public Review add(@Valid @RequestBody Review review) {
+	public Review addReview(@RequestBody Review review) {
 		return reviewService.addReview(review);
 	}
 
 	@PutMapping
-	public Review update(@Valid @RequestBody Review review) {
+	public Review updateReview(@RequestBody Review review) {
 		return reviewService.updateReview(review);
 	}
 
-	@DeleteMapping(ApiPathConstants.BY_ID_PATH)
-	public void delete(@PathVariable(name = "id") Integer id) {
+	@PutMapping("/{id}/like/{userId}")
+	public void addLike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+		reviewService.addLike(id, userId);
+	}
+
+	@PutMapping("/{id}/dislike/{userId}")
+	public void addDislike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+		reviewService.addDislike(id, userId);
+	}
+
+	@DeleteMapping({ "/{id}" })
+	public void deleteReview(@PathVariable("id") Long id) {
 		reviewService.deleteReview(id);
 	}
 
-	@GetMapping(ApiPathConstants.BY_ID_PATH)
-	public Review getReviewById(@PathVariable(name = "id") Long id) {
-		return reviewService.getReviewById(id);
-
+	@DeleteMapping({ "/{id}/like/{userId}" })
+	public void deleteLike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+		reviewService.deleteLike(id, userId);
 	}
 
-	@GetMapping
-	public Collection<Review> getReviews(@RequestParam(name = "filmId", required = false) Integer filmId,
-			@RequestParam(name = "count", required = false) Integer count) {
-
-		return reviewService.getReviews(filmId, count);
+	@DeleteMapping({ "/{id}/dislike/{userId}" })
+	public void deleteDislike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+		reviewService.deleteDislike(id, userId);
 	}
-
-	@PutMapping(ApiPathConstants.LIKE_PATH)
-	public ResponseEntity<Review> addLikeToReview(@PathVariable(name = "id") Long id,
-			@PathVariable(name = "userId") Integer userId) {
-		reviewService.addLike(id, userId);
-		return ResponseEntity.status(200).build();
-	}
-
-	@PutMapping(ApiPathConstants.DISLIKE_PATH)
-	public ResponseEntity<Review> addDislikeToReview(@PathVariable(name = "id") Long id,
-			@PathVariable(name = "userId") Integer userId) {
-		reviewService.addDislike(id, userId);
-		return ResponseEntity.status(200).build();
-	}
-
-	@DeleteMapping(ApiPathConstants.LIKE_PATH)
-	public ResponseEntity<Review> removeLike(@PathVariable(name = "id") Integer id,
-			@PathVariable(name = "userId") Integer userId) {
-		reviewService.removeLike(id, userId);
-		return ResponseEntity.status(200).build();
-	}
-
-	@DeleteMapping(ApiPathConstants.DISLIKE_PATH)
-	public ResponseEntity<Review> removeDislike(@PathVariable(name = "id") Integer id,
-			@PathVariable(name = "userId") Integer userId) {
-		reviewService.removeDislike(id, userId);
-		return ResponseEntity.status(200).build();
-	}
-
 }

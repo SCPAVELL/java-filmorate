@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 
 @Data
-public class Director {
-	private Long id;
+public class Mpa {
+	private Integer id;
 	private String name;
 }

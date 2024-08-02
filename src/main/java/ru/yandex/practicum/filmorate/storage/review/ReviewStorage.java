@@ -1,35 +1,25 @@
 package ru.yandex.practicum.filmorate.storage.review;
 
-import org.springframework.lang.Nullable;
-import ru.yandex.practicum.filmorate.exception.review.ReviewNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.Collection;
-import java.util.Optional;
 
 public interface ReviewStorage {
+	Review getReview(Long id);
+
+	Collection<Review> getReviews(Long filmId);
 
 	Review addReview(Review review);
 
 	Review updateReview(Review review);
 
-	void deleteReview(int reviewId);
+	void addLike(Long id, Long userId);
 
-	Optional<Review> getReviewById(Long id);
+	void addDislike(Long id, Long userId);
 
-	Collection<Review> getReviews(@Nullable Integer filmId, @Nullable Integer limit);
+	void deleteReview(Long id);
 
-	default Review getReviewFromStorage(Long reviewId) {
-		return getReviewById(reviewId)
-				.orElseThrow(() -> new ReviewNotFoundException("Отзыв по id=" + reviewId + " не найден"));
-	}
+	void deleteLike(Long id, Long userId);
 
-	void addLikeToReview(Long reviewId, Integer userId);
-
-	void addDislikeToReview(Long reviewId, Integer userId);
-
-	void removeLike(Integer reviewId, Integer userId);
-
-	void removeDislike(Integer reviewId, Integer userId);
-
+	void deleteDislike(Long id, Long userId);
 }

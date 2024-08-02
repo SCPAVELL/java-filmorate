@@ -1,12 +1,13 @@
-MERGE INTO genres(id, title) VALUES (1, 'Комедия');
-MERGE INTO genres(id, title) VALUES (2, 'Драма');
-MERGE INTO genres(id, title) VALUES (3, 'Мультфильм');
-MERGE INTO genres(id, title) VALUES (4, 'Триллер');
-MERGE INTO genres(id, title) VALUES (5, 'Документальный');
-MERGE INTO genres(id, title) VALUES (6, 'Боевик');
+insert into MPA (NAME) select 'G' x where not exists(select * from MPA WHERE NAME = 'G');
+insert into MPA (NAME) select 'PG' x where not exists(select * from MPA WHERE NAME = 'PG');
+insert into MPA (NAME) select 'PG-13' x where not exists(select * from MPA WHERE NAME = 'PG-13');
+insert into MPA (NAME) select 'R' x where not exists(select * from MPA WHERE NAME = 'R');
+insert into MPA (NAME) select 'NC-17' x where not exists(select * from MPA WHERE NAME = 'NC-17');
 
-MERGE INTO mpa_ratings(id, title) VALUES (1, 'G');
-MERGE INTO mpa_ratings(id, title) VALUES (2, 'PG');
-MERGE INTO mpa_ratings(id, title) VALUES (3, 'PG-13');
-MERGE INTO mpa_ratings(id, title) VALUES (4, 'R');
-MERGE INTO mpa_ratings(id, title) VALUES (5, 'NC-17');
+
+insert into GENRES (NAME) select 'Комедия' x where not exists(select * from GENRES WHERE NAME = 'Комедия');
+insert into GENRES (NAME) select 'Драма' x where not exists(select * from GENRES WHERE NAME = 'Драма');
+insert into GENRES (NAME) select 'Мультфильм' x where not exists(select * from GENRES WHERE NAME = 'Мультфильм');
+insert into GENRES (NAME) select 'Триллер' x where not exists(select * from GENRES WHERE NAME = 'Триллер');
+insert into GENRES (NAME) select 'Документальный' x where not exists(select * from GENRES WHERE NAME = 'Документальный');
+insert into GENRES (NAME) select 'Боевик' x where not exists(select * from GENRES WHERE NAME = 'Боевик');
