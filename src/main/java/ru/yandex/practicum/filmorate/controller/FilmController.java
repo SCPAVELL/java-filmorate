@@ -47,6 +47,12 @@ public class FilmController {
 	@GetMapping("/popular")
 	public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count,
 			@RequestParam(required = false) Integer genreId, @RequestParam(required = false) Integer year) {
+		if (genreId == null) {
+			genreId = 0; // значение по умолчанию для genreId
+		}
+		if (year == null) {
+			year = 0; // значение по умолчанию для year
+		}
 		return filmService.getPopularByYear(count, genreId, year);
 	}
 
