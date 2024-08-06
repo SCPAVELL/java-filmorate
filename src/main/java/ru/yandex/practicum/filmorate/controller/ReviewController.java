@@ -2,6 +2,9 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
 
@@ -24,21 +27,29 @@ public class ReviewController {
 		return reviewService.getReviews(filmId, count);
 	}
 
+	@NotNull
+	@Valid
 	@PostMapping
 	public Review addReview(@RequestBody Review review) {
 		return reviewService.addReview(review);
 	}
 
+	@NotNull
+	@Valid
 	@PutMapping
 	public Review updateReview(@RequestBody Review review) {
 		return reviewService.updateReview(review);
 	}
 
+	@NotNull
+	@Valid
 	@PutMapping("/{id}/like/{userId}")
 	public void addLike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
 		reviewService.addLike(id, userId);
 	}
 
+	@NotNull
+	@Valid
 	@PutMapping("/{id}/dislike/{userId}")
 	public void addDislike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
 		reviewService.addDislike(id, userId);

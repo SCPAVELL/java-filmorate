@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +40,13 @@ public class UserController {
 	}
 
 	@GetMapping("/{id}/friends/common/{otherId}")
-	public Collection<UserDto> getMutualFriends(@PathVariable("id") Long userId, @PathVariable("otherId") Long otherId) {
+	public Collection<UserDto> getMutualFriends(@PathVariable("id") Long userId,
+			@PathVariable("otherId") Long otherId) {
 		return userService.getMutualFriends(userId, otherId);
 	}
 
+	@NotNull
+	@Valid
 	@PostMapping
 	public UserDto addUser(@Valid @RequestBody User user) {
 		return userService.addUser(user);
@@ -58,6 +62,8 @@ public class UserController {
 		return userService.getRecommendationFilms(userId);
 	}
 
+	@NotNull
+	@Valid
 	@PutMapping("/{id}/friends/{friendId}")
 	public void addFriend(@PathVariable("id") Long userId, @PathVariable("friendId") Long friendId) {
 		userService.addFriend(userId, friendId);

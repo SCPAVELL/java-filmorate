@@ -2,6 +2,9 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -28,11 +31,15 @@ public class FilmController {
 		return filmService.addFilm(film);
 	}
 
+	@NotNull
+	@Valid
 	@PutMapping
 	public Film update(@RequestBody Film newFilm) {
 		return filmService.changeFilm(newFilm);
 	}
 
+	@NotNull
+	@Valid
 	@PutMapping("/{id}/like/{userId}")
 	public void addLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
 		filmService.addLike(filmId, userId);
@@ -47,6 +54,15 @@ public class FilmController {
 	@GetMapping("/popular")
 	public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count,
 			@RequestParam(required = false) Integer genreId, @RequestParam(required = false) Integer year) {
+		if (count < 0) {
+			count = 10;
+		}
+		if (genreId == null) {
+			genreId = -1;
+		}
+		if (year == null) {
+			year = 0;
+		}
 		return filmService.getPopularByYear(count, genreId, year);
 	}
 
