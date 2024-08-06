@@ -38,12 +38,18 @@ public class DirectorService {
 	}
 
 	public Director changeDirector(Director director) {
-		getDirector(director.getId());
+		checkDirectorExists(director.getId());
 		return directorStorage.changeDirector(director);
 	}
 
 	public void deleteDirector(long id) {
-		getDirector(id);
+		checkDirectorExists(id);
 		directorStorage.deleteDirector(id);
+	}
+
+	private void checkDirectorExists(long id) {
+		if (directorStorage.getDirector(id).isEmpty()) {
+			throw new NotFoundException("Director с id = " + id + " не найден");
+		}
 	}
 }
