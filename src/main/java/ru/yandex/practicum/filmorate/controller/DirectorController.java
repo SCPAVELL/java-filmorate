@@ -35,8 +35,7 @@ public class DirectorController {
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<String> deleteDirector(@PathVariable Long id) {
+	public void deleteDirector(@PathVariable Long id) {
 		directorService.deleteDirector(id);
-		return ResponseEntity.ok("Director with id " + id + " has been successfully deleted");
 	}
 }
