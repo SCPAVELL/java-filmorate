@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -45,14 +47,8 @@ public class FilmController {
 
 	// GET /films/popular?count={limit}&genreId={genreId}&year={year}
 	@GetMapping("/popular")
-	public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count,
+	public Collection<Film> getPopular(@NotNull @RequestParam(defaultValue = "10") int count,
 			@RequestParam(required = false) Integer genreId, @RequestParam(required = false) Integer year) {
-		if (genreId == null) {
-			genreId = 0; // значение по умолчанию для genreId
-		}
-		if (year == null) {
-			year = 0; // значение по умолчанию для year
-		}
 		return filmService.getPopularByYear(count, genreId, year);
 	}
 
