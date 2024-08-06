@@ -1,72 +1,32 @@
 package ru.yandex.practicum.filmorate.exception;
 
-import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.model.ErrorMessage;
-
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-
-import jakarta.validation.ConstraintViolationException;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import ru.yandex.practicum.filmorate.model.ErrorResponse;
 
 @RestControllerAdvice
-@Slf4j
 public class ErrorHandler {
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(value = { FilmValidationException.class, UserValidationException.class })
-	public ErrorMessage handleException(ConstraintViolationException exception, WebRequest request) {
-		Map<String, String> errors = new HashMap<>();
-		exception.getConstraintViolations().forEach(error -> {
-			String fieldName = error.getPropertyPath().toString();
-			String errorMessage = error.getMessage() + " Значение: " + error.getInvalidValue().toString();
-			errors.put(fieldName, errorMessage);
-		});
-		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.BAD_REQUEST.value(), String.valueOf(errors),
-				request.getDescription(false));
-		log.error("Ошибка запроса: {}", errors);
-		return error;
-	}
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(value = { WrongIdException.class })
-	public ErrorMessage handleWrongIdException(Exception exception, WebRequest request) {
-		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.BAD_REQUEST.value(), exception.getMessage(),
-				request.getDescription(false));
-		log.error("Ошибка запроса: {} {}", exception.getMessage(), request.getDescription(false));
-		return error;
-	}
-
+	@ExceptionHandler
 	@ResponseStatus(HttpStatus.NOT_FOUND)
-	@ExceptionHandler(value = { NotFoundException.class })
-	public ErrorMessage handleNotFoundException(NotFoundException exception, WebRequest request) {
-		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.NOT_FOUND.value(), exception.getMessage(),
-				request.getDescription(false));
-		log.error("Ошибка запроса: {} {}", exception.getMessage(), request.getDescription(false));
-		return error;
+	public ErrorResponse handleNotFound(final NotFoundException e) {
+		return new ErrorResponse(e.getMessage(), "Not Found");
 	}
 
+	@ExceptionHandler({ ValidationException.class, MethodArgumentNotValidException.class,
+			DataIntegrityViolationException.class })
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(value = { MethodArgumentNotValidException.class })
-	public ErrorMessage handleValidationExceptions(MethodArgumentNotValidException exception, WebRequest request) {
-		Map<String, String> errors = new HashMap<>();
-		exception.getBindingResult().getAllErrors().forEach(error -> {
-			String fieldName = ((FieldError) error).getField();
-			String errorMessage = error.getDefaultMessage();
-			errors.put(fieldName, errorMessage);
-		});
-		ErrorMessage error = new ErrorMessage(new Date(), HttpStatus.BAD_REQUEST.value(), String.valueOf(errors),
-				request.getDescription(false));
-		log.error("Ошибка запроса: {}", errors);
-		return error;
+	public ErrorResponse handleParameterNotValid(final Exception e) {
+		return new ErrorResponse(e.getMessage(), "Ошибка валидации");
 	}
 
+	@ExceptionHandler
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public ErrorResponse handleException(final Exception e) {
+		return new ErrorResponse(e.getMessage(), "Произошла непредвиденная ошибка.");
+	}
 }
