@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,8 @@ public class UserController {
 	}
 
 	@PostMapping
+	@Valid
+	@NotNull
 	public UserDto addUser(@Valid @RequestBody User user) {
 		return userService.addUser(user);
 	}
