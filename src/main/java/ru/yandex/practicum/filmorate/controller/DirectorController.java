@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -41,7 +43,8 @@ public class DirectorController {
 	}
 
 	@DeleteMapping("/{id}")
-	public void deleteDirector(@PathVariable Long id) {
+	public ResponseEntity<Void> deleteDirector(@PathVariable Long id) {
 		directorService.deleteDirector(id);
+		return ResponseEntity.noContent().build();
 	}
 }
