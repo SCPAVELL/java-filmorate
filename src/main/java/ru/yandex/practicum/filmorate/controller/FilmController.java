@@ -45,6 +45,10 @@ public class FilmController {
 		filmService.deleteLike(filmId, userId);
 	}
 
+	// count имеет значение по умолчанию 10, которое будет использоваться, если
+	// параметр не указан в запросе. Параметры genreId и year также имеют значение
+	// required = false, что позволяет им отсутствовать в запросе без возникновения
+	// ошибки.
 	// GET /films/popular?count={limit}&genreId={genreId}&year={year}
 	@GetMapping("/popular")
 	public Collection<Film> getPopular(@NotNull @RequestParam(defaultValue = "10") int count,
