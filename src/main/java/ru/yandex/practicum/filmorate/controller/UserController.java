@@ -45,8 +45,6 @@ public class UserController {
 		return userService.getMutualFriends(userId, otherId);
 	}
 
-	@NotNull
-	@Valid
 	@PostMapping
 	public UserDto addUser(@Valid @RequestBody User user) {
 		return userService.addUser(user);
@@ -62,8 +60,6 @@ public class UserController {
 		return userService.getRecommendationFilms(userId);
 	}
 
-	@NotNull
-	@Valid
 	@PutMapping("/{id}/friends/{friendId}")
 	public void addFriend(@PathVariable("id") Long userId, @PathVariable("friendId") Long friendId) {
 		userService.addFriend(userId, friendId);

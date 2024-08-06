@@ -28,15 +28,11 @@ public class DirectorController {
 		return directorService.getDirectors();
 	}
 
-	@NotNull
-	@Valid
 	@PostMapping
 	public Director addDirector(@RequestBody Director director) {
 		return directorService.addDirector(director);
 	}
 
-	@NotNull
-	@Valid
 	@PutMapping
 	public Director updateDirector(@RequestBody Director director) {
 		return directorService.changeDirector(director);

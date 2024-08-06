@@ -31,15 +31,11 @@ public class FilmController {
 		return filmService.addFilm(film);
 	}
 
-	@NotNull
-	@Valid
 	@PutMapping
 	public Film update(@RequestBody Film newFilm) {
 		return filmService.changeFilm(newFilm);
 	}
 
-	@NotNull
-	@Valid
 	@PutMapping("/{id}/like/{userId}")
 	public void addLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
 		filmService.addLike(filmId, userId);
