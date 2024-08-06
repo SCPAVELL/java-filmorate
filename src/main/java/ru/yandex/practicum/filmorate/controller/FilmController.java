@@ -2,9 +2,6 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -37,8 +34,6 @@ public class FilmController {
 	}
 
 	@PutMapping("/{id}/like/{userId}")
-	@Valid
-	@NotNull
 	public void addLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
 		filmService.addLike(filmId, userId);
 	}
