@@ -1,101 +1,80 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.service.FilmService;
+import ru.yandex.practicum.filmorate.service.FilmService;
+
 import java.util.Collection;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/films")
-@Slf4j
 public class FilmController {
-
 	private final FilmService filmService;
 
-	@Autowired(required = false)
-	public FilmController(FilmService filmService) {
-		this.filmService = filmService;
-	}
-
-	@GetMapping
-	public Collection<Film> findAll() {
-		log.info("Получен запрос GET к эндпоинту: /films");
-		return filmService.getFilms();
-	}
-
 	@GetMapping("/{id}")
-	public Film findFilm(@PathVariable String id) {
-		log.info("Получен запрос GET к эндпоинту: /films/{}", id);
+	public Film getFilm(@PathVariable("id") Long id) {
 		return filmService.getFilm(id);
 	}
 
-	@GetMapping({ "/popular?count={count}", "/popular" })
-	public Collection<Film> findMostPopular(@RequestParam(defaultValue = "10") int count) {
-		log.info("Получен запрос GET к эндпоинту: /films/popular?count={}", count);
-		return filmService.getMostPopularFilms(count);
+	@GetMapping
+	public Collection<Film> getFilms() {
+		return filmService.getFilms();
 	}
 
 	@PostMapping
 	public Film create(@RequestBody Film film) {
-		log.info("Получен запрос POST. Данные тела запроса: {}", film);
-		try {
-			Film validFilm = filmService.add(film);
-			log.info("Создан объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
-			return validFilm;
-		} catch (DataIntegrityViolationException e) {
-			log.error("Ошибка при создании фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-		} catch (Exception e) {
-			log.error("Непредвиденная ошибка при создании фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Непредвиденная ошибка при создании фильма", e);
-		}
+		return filmService.addFilm(film);
 	}
 
 	@PutMapping
-	public Film put(@RequestBody Film film) {
-		log.info("Получен запрос PUT. Данные тела запроса: {}", film);
-		try {
-			Film validFilm = filmService.update(film);
-			log.info("Обновлен объект {} с идентификатором {}", Film.class.getSimpleName(), validFilm.getId());
-			return validFilm;
-		} catch (DataIntegrityViolationException e) {
-			log.error("Ошибка при обновлении фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
-		} catch (Exception e) {
-			log.error("Непредвиденная ошибка при обновлении фильма: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"Непредвиденная ошибка при обновлении фильма", e);
-		}
+	public Film update(@RequestBody Film newFilm) {
+		return filmService.changeFilm(newFilm);
 	}
 
 	@PutMapping("/{id}/like/{userId}")
-	public void putLike(@PathVariable String id, @PathVariable String userId) {
-		log.info("Получен запрос PUT к эндпоинту: /films/{}/like/{}", id, userId);
-		filmService.addLike(id, userId);
-		log.info("Обновлен объект {} с идентификатором {}, добавлен лайк от пользователя {}",
-				Film.class.getSimpleName(), id, userId);
+	public void addLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
+		filmService.addLike(filmId, userId);
 	}
 
 	@DeleteMapping("/{id}/like/{userId}")
-	public void deleteLike(@PathVariable String id, @PathVariable String userId) {
-		log.info("Получен запрос DELETE к эндпоинту: films/{}/like/{}", id, userId);
-		filmService.deleteLike(id, userId);
-		log.info("Обновлен объект {} с идентификатором {}, удален лайк от пользователя {}", Film.class.getSimpleName(),
-				id, userId);
+	public void deleteLike(@PathVariable("id") Long filmId, @PathVariable("userId") Long userId) {
+		filmService.deleteLike(filmId, userId);
+	}
 
+	// count имеет значение по умолчанию 10, которое будет использоваться, если
+	// параметр не указан в запросе. Параметры genreId и year также имеют значение
+	// required = false, что позволяет им отсутствовать в запросе без возникновения
+	// ошибки.
+	// GET /films/popular?count={limit}&genreId={genreId}&year={year}
+	@GetMapping("/popular")
+	public Collection<Film> getPopular(@NotNull @RequestParam(defaultValue = "10") int count,
+			@RequestParam(required = false) Integer genreId, @RequestParam(required = false) Integer year) {
+		return filmService.getPopularByYear(count, genreId, year);
+	}
+
+	@DeleteMapping({ "/{id}" })
+	public void deleteFilm(@PathVariable("id") Long filmId) {
+		filmService.deleteFilm(filmId);
+	}
+
+	@GetMapping("/common")
+	public Collection<Film> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
+		return filmService.getCommonFilms(userId, friendId);
+	}
+
+	@GetMapping("/director/{directorId}")
+	public Collection<Film> getSortedDirectorsFilms(@PathVariable("directorId") Long directorId,
+			@RequestParam String sortBy) {
+		return filmService.getSortedDirectorsFilms(directorId, sortBy);
+	}
+
+	@GetMapping("/search")
+	public Collection<Film> search(@RequestParam(defaultValue = "") String query,
+			@RequestParam(defaultValue = "title") String by) {
+		return filmService.search(query, by);
 	}
 }
